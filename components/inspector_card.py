@@ -232,6 +232,15 @@ def cache_inspector_card_content(
                     "accent_color_class": accent_color_class,
                 }
             )
+        # Sort by incident date descending (most recent first) 
+        # for display in the inspector card.
+        incident_infos.sort(
+            key=lambda x: datetime.strptime(x["incident_date"], "%B %d, %Y")
+            if x["incident_date"] != "Not available"
+            else datetime.min,
+            reverse=True,
+        )
+            
         cache_payload["incident_infos"] = incident_infos
 
     # Case: No incidents for the selected country and perspective
