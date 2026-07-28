@@ -278,9 +278,17 @@ def precompute_app_cache(
             # "-99" is a common placeholder for disputed/invalid territories
             if not iso or iso == "-99":  # Skip invalid or missing ISOs
                 continue
+            
+            # Handle Australia as special case: it has overseas territories
+            # that we do not need to include in the main map view. We will use 
+            # the mainland polygon only.
+            # This is due to us having to use the "eh" variant of ISO codes for consistency with the EuRepoC dataset.
+            if iso == "AU" and row.get(GeoJsonKeys.ADMIN) != "Australia":
+                continue
 
             # Extract the country name from the GeoDataFrame
-            # Try primary name field first, fall back to admin field, then "Unknown"
+            # Try primary name field first, fall back to admin 
+            # field, then "Unknown"
             country_name = (
                 row.get(GeoJsonKeys.NAME)
                 or row.get(GeoJsonKeys.ADMIN)
@@ -401,6 +409,7 @@ def precompute_app_cache(
 #
 # This will generate app_cache.json in the working directory.
 if __name__ == "__main__":
-    from static import COUNTRIES_JSON, DYADIC_DATABASE
+    from data_helpers.db import DYADIC_DATABASE
+    from static import COUNTRIES_JSON
 
     precompute_app_cache(COUNTRIES_JSON, DYADIC_DATABASE)

@@ -145,7 +145,6 @@ def build_country_shape_svg_data_uri(iso_alpha_2: str, geometry: BaseGeometry) -
 
     empire_exceptions = [
         "FR",  # France (overseas territories)
-        # "AU",  # Australia (overseas territories)
     ]
 
     # Multi-territory extraction: Some countries include far-flung territories
