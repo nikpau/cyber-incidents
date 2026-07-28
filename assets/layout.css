@@ -175,7 +175,7 @@
 
 .perspective-switch {
   position: absolute;
-  bottom: clamp(6.6rem, 5.8rem + 1.9vw, 8.75rem);
+  bottom: clamp(8.1rem, 5.8rem + 1.9vw, 8.75rem);
   left: var(--edge-space);
   z-index: 12;
   font-family: "Oxanium", sans-serif;
