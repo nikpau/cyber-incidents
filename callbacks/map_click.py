@@ -10,7 +10,7 @@ from components.map import (
     geometry_for_iso,
     get_map_json_fast,
 )
-from static import APP_CACHE
+from static import APP_CACHE, GeoJsonKeys, DyadicCols, IncidentType
 
 
 # Register the callback for handling map clicks by rendering
@@ -19,7 +19,7 @@ def register_map_click_callback(
     app: Dash,
     countries_json: dict,
 ) -> None:
-    countries_gdf = gpd.GeoDataFrame.from_features(countries_json["features"])
+    countries_gdf = gpd.GeoDataFrame.from_features(countries_json[GeoJsonKeys.FEATURES.value])
 
     @app.callback(
         Output("arc-data-store", "data"),
@@ -56,8 +56,8 @@ def register_map_click_callback(
             return no_update, no_update, no_update, no_update
 
         iso_alpha_2 = (
-            clicked_object.get("iso_a2_eh")
-            or clicked_object.get("properties", {}).get("iso_a2_eh")
+            clicked_object.get(GeoJsonKeys.ISO_A2_EH)
+            or clicked_object.get(GeoJsonKeys.PROPERTIES, {}).get(GeoJsonKeys.ISO_A2_EH)
         )
         if not iso_alpha_2:
             return no_update, no_update, no_update, no_update

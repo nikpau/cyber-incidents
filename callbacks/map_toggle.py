@@ -29,12 +29,11 @@ Dependencies:
 
 from dash import Dash, Input, Output, State, no_update
 
-import static
 from components.inspector_card import (
     render_inspector_card_content,
 )
 from components.map import get_map_json_fast
-from static import APP_CACHE
+from static import APP_CACHE, IncidentType, DyadicCols, GeoJsonKeys
 
 
 def register_map_toggle_callbacks(
@@ -128,9 +127,9 @@ def register_map_toggle_callbacks(
         if not isinstance(clicked_object, dict):
             return None
 
-        return clicked_object.get("iso_a2_eh") or clicked_object.get(
-            "properties", {}
-        ).get("iso_a2_eh")
+        return clicked_object.get(GeoJsonKeys.ISO_A2_EH) or clicked_object.get(
+            GeoJsonKeys.PROPERTIES, {}
+        ).get(GeoJsonKeys.ISO_A2_EH)
 
     @app.callback(
         Output("base-map-store", "data", allow_duplicate=True),
@@ -240,9 +239,7 @@ def register_map_toggle_callbacks(
 
         # Select the incident type enum based on the perspective
         incident_type = (
-            static.IncidentType.ATTACKER.value
-            if is_attacker_view
-            else static.IncidentType.RECEIVER.value
+            IncidentType.ATTACKER if is_attacker_view else IncidentType.RECEIVER
         )
 
         # Retrieve the maximum incident count for this perspective from the cache

@@ -21,6 +21,7 @@ from data_helpers.db import (
     DYADIC_DATABASE,
     get_colorbar_gradient_css,
 )
+from static import IncidentType
 
 
 def init_app() -> Dash:
@@ -47,7 +48,7 @@ def init_app() -> Dash:
             dcc.Store(
                 id="base-map-store",
                 data=get_map_json_fast(
-                    APP_CACHE[static.IncidentType.ATTACKER.value]["DEFAULT"]["base_geojson_dict"]
+                    APP_CACHE[IncidentType.ATTACKER]["DEFAULT"]["base_geojson_dict"]
                 ),
             ),
             dcc.Store(id="arc-data-store", data=[]),

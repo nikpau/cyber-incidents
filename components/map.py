@@ -1,5 +1,4 @@
 import math
-from typing import Literal
 from urllib.parse import quote
 
 import dash_deck
@@ -10,7 +9,7 @@ from shapely.geometry.base import BaseGeometry
 from shapely.ops import transform
 
 import static
-from static import APP_CACHE
+from static import APP_CACHE, GeoJsonKeys, IncidentType
 
 
 def get_map_json_fast(
@@ -25,7 +24,7 @@ def get_map_json_fast(
         str: A JSON string representing the PyDeck map configuration.
     """
     layers = []
-    base_geojson = gpd.GeoDataFrame.from_features(base_geojson["features"])
+    base_geojson = gpd.GeoDataFrame.from_features(base_geojson[GeoJsonKeys.FEATURES])
     geojson_layer = pdk.Layer(
         "GeoJsonLayer",
         data=base_geojson,
@@ -88,7 +87,7 @@ def render_map_canvas() -> html.Div:
 def country_name_for_iso(
     countries_gdf: gpd.GeoDataFrame, iso_alpha_2: str, additional_name: str
 ) -> str:
-    selected = countries_gdf.loc[countries_gdf["iso_a2_eh"] == iso_alpha_2]
+    selected = countries_gdf.loc[countries_gdf[GeoJsonKeys.ISO_A2_EH] == iso_alpha_2]
     if selected.empty:
         return "Unknown Country"
 
@@ -101,10 +100,10 @@ def country_name_for_iso(
 
     row = selected.iloc[0]
     return (
-        row.get("name")
-        or row.get("admin")
-        or row.get("sovereignt")
-        or row.get("formal_en")
+        row.get(GeoJsonKeys.NAME)
+        or row.get(GeoJsonKeys.ADMIN)
+        or row.get(GeoJsonKeys.SOVEREIGNT)
+        or row.get(GeoJsonKeys.FORMAL_EN)
         or "Unknown Country"
     )
 
@@ -112,7 +111,7 @@ def country_name_for_iso(
 def geometry_for_iso(
     countries_gdf: gpd.GeoDataFrame, iso_alpha_2: str, additional_name: str
 ) -> BaseGeometry | None:
-    selected = countries_gdf.loc[countries_gdf["iso_a2_eh"] == iso_alpha_2]
+    selected = countries_gdf.loc[countries_gdf[GeoJsonKeys.ISO_A2_EH] == iso_alpha_2]
     if selected.empty:
         return None
 
@@ -121,8 +120,8 @@ def geometry_for_iso(
     # If we have an additional name from the GeoJSON properties, we can use
     # it to disambiguate.
     if len(selected) > 1 and additional_name:
-        selected = selected.loc[selected["name"] == additional_name]
-    geometry = selected.iloc[0].get("geometry")
+        selected = selected.loc[selected[GeoJsonKeys.NAME] == additional_name]
+    geometry = selected.iloc[0].get(GeoJsonKeys.GEOMETRY)
     if geometry is None or geometry.is_empty:
         return None
     return geometry
@@ -231,7 +230,7 @@ def build_country_shape_svg_data_uri(iso_alpha_2: str, geometry: BaseGeometry) -
     return f"data:image/svg+xml;charset=utf-8,{quote(svg)}"
 
 
-def get_colorbar_ticks(incident_type: Literal["attacker", "receiver"]) -> html.Div:
+def get_colorbar_ticks(incident_type: IncidentType) -> html.Div:
     """
     Returns the maximum incident count for the colorbar based on the current perspective (attacker or receiver).
     """

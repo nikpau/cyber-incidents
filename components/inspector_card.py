@@ -1,12 +1,12 @@
 import colorsys
 from datetime import datetime
-from typing import Literal
 
 import matplotlib.colors as mc
 import pandas as pd
 from dash import html
 
 from data_helpers.db import ATTACKER_RANKING, RECEIVER_RANKING
+from static import DyadicCols, IncidentType
 
 
 def render_inspector_card_default():
@@ -44,7 +44,9 @@ def render_inspector_card_default():
                     html.P(
                         "Between January 1, 2000 and December 31, 2024, EuRepoC recorded"
                     ),
-                    html.P("3146 incidents", className="inspector-card-content-highlight"),
+                    html.P(
+                        "3146 incidents", className="inspector-card-content-highlight"
+                    ),
                     html.P(
                         "in which either state-coordinated or non-state actors were involved in cybercrime incidents across the globe."
                     ),
@@ -56,9 +58,10 @@ def render_inspector_card_default():
         ],
     )
 
+
 def cache_inspector_card_content(
     single_country_info: pd.DataFrame | None,
-    incident_type: Literal["attacker", "receiver"],
+    incident_type: IncidentType,
 ) -> list[html.Div | html.P | html.A]:
     """
     Caches the content of the inspector card for a specific country and incident type
@@ -66,28 +69,30 @@ def cache_inspector_card_content(
     """
     cache_payload = {}
     cache_payload["incident_type"] = incident_type
-    
+
     a_ranks, r_ranks = ATTACKER_RANKING, RECEIVER_RANKING
 
-    a_or_r = "Attacker" if incident_type == "attacker" else "Receiver"
+    a_or_r = "Attacker" if incident_type == IncidentType.ATTACKER else "Receiver"
 
     # Heading "Attacker Rank:" or "Receiver Rank:"
     cache_payload["rank_heading"] = f"{a_or_r} Rank:"
 
     # 2-column layout with threat bar on the left and rank on the right
     if single_country_info is not None and not single_country_info.empty:
-        a_current_alpha_2 = single_country_info["initiator_alpha_2"].iloc[0]
-        r_current_alpha_2 = single_country_info["receiver_country_alpha_2_code"].iloc[0]
+        a_current_alpha_2 = single_country_info[DyadicCols.INITIATOR_ALPHA_2].iloc[0]
+        r_current_alpha_2 = single_country_info[
+            DyadicCols.RECEIVER_COUNTRY_ALPHA_2_CODE
+        ].iloc[0]
 
-        if incident_type == "attacker":
-            has_rank = a_current_alpha_2 in a_ranks["initiator_alpha_2"].values
+        if incident_type == IncidentType.ATTACKER:
+            has_rank = a_current_alpha_2 in a_ranks[DyadicCols.INITIATOR_ALPHA_2].values
             if has_rank:
-                rank = a_ranks.loc[a_ranks["initiator_alpha_2"] == a_current_alpha_2][
-                    "rank"
-                ].item()
+                rank = a_ranks.loc[
+                    a_ranks[DyadicCols.INITIATOR_ALPHA_2] == a_current_alpha_2
+                ]["rank"].item()
                 threat_score = (
                     a_ranks.loc[
-                        a_ranks["initiator_alpha_2"] == a_current_alpha_2,
+                        a_ranks[DyadicCols.INITIATOR_ALPHA_2] == a_current_alpha_2,
                         "incident_count",
                     ].item()
                     / a_ranks["incident_count"].max()
@@ -99,15 +104,18 @@ def cache_inspector_card_content(
                 threat_score = 0.0
         else:
             has_rank = (
-                r_current_alpha_2 in r_ranks["receiver_country_alpha_2_code"].values
+                r_current_alpha_2
+                in r_ranks[DyadicCols.RECEIVER_COUNTRY_ALPHA_2_CODE].values
             )
             if has_rank:
                 rank = r_ranks.loc[
-                    r_ranks["receiver_country_alpha_2_code"] == r_current_alpha_2
+                    r_ranks[DyadicCols.RECEIVER_COUNTRY_ALPHA_2_CODE]
+                    == r_current_alpha_2
                 ]["rank"].item()
                 threat_score = (
                     r_ranks.loc[
-                        r_ranks["receiver_country_alpha_2_code"] == r_current_alpha_2,
+                        r_ranks[DyadicCols.RECEIVER_COUNTRY_ALPHA_2_CODE]
+                        == r_current_alpha_2,
                         "incident_count",
                     ].item()
                     / r_ranks["incident_count"].max()
@@ -129,52 +137,54 @@ def cache_inspector_card_content(
         incident_infos = []
         incident_ids_seen = set()  # To avoid duplicates
         for _, row in single_country_info.iterrows():
-            incident_id = row["incident_id"]
-            
+            incident_id = row[DyadicCols.INCIDENT_ID]
+
             if incident_id not in incident_ids_seen:
                 incident_ids_seen.add(incident_id)
             else:
                 continue
-            
+
             source_or_target_label = (
-                "Source(s)" if incident_type == "receiver" else "Target(s)"
+                "Source(s)" if incident_type == IncidentType.RECEIVER else "Target(s)"
             )
             source_or_target_val = (
                 ", ".join(
                     single_country_info.loc[
-                        single_country_info["incident_id"] == incident_id, 
-                        "initiator_country"]
+                        single_country_info[DyadicCols.INCIDENT_ID] == incident_id,
+                        DyadicCols.INITIATOR_COUNTRY,
+                    ]
                     .dropna()
                     .astype(str)
                     .unique()
                 )
-                if incident_type == "receiver"
+                if incident_type == IncidentType.RECEIVER
                 else ", ".join(
                     single_country_info.loc[
-                        single_country_info["incident_id"] == incident_id, 
-                        "receiver_country"]
+                        single_country_info[DyadicCols.INCIDENT_ID] == incident_id,
+                        DyadicCols.RECEIVER_COUNTRY,
+                    ]
                     .dropna()
                     .astype(str)
                     .unique()
                 )
             )
-            
-            # Determine accent color based on role 
+
+            # Determine accent color based on role
             # (attacker = red/orange, receiver = cyan/blue)
             accent_color_class = (
                 "incident-card-attacker"
-                if incident_type == "attacker"
+                if incident_type == IncidentType.ATTACKER
                 else "incident-card-receiver"
             )
 
             incident_infos.append(
                 {
-                    "incident_name": row["name"],
-                    "incident_date": date_to_human_readable(row["start_date"]),
+                    "incident_name": row[DyadicCols.NAME],
+                    "incident_date": date_to_human_readable(row[DyadicCols.START_DATE]),
                     "source_or_target_label": source_or_target_label,
                     "source_or_target_val": source_or_target_val,
-                    "initiator_name": row["initiator_name"],
-                    "description": row["description"],
+                    "initiator_name": row[DyadicCols.INITIATOR_NAME],
+                    "description": row[DyadicCols.DESCRIPTION],
                     "accent_color_class": accent_color_class,
                 }
             )
@@ -187,11 +197,10 @@ def cache_inspector_card_content(
         cache_payload["rank"] = "N/A"
 
     return cache_payload
-        
 
 
 def render_inspector_card_content(
-    cache_data: dict[str, str]
+    cache_data: dict[str, str],
 ) -> list[html.Div | html.P | html.A]:
     """
     Renders the content of the inspector card based on cached data.
@@ -204,17 +213,15 @@ def render_inspector_card_content(
     """
     # Heading "Attacker Rank:" or "Receiver Rank:"
     rank_heading = html.H2(
-        f"{cache_data.get('rank_heading')}", 
-        className="inspector-card-country-subheading"
+        f"{cache_data.get('rank_heading')}",
+        className="inspector-card-country-subheading",
     )
 
     # 2-column layout with threat bar on the left and rank on the right
     if cache_data.get("incident_infos"):
-
         # Cube root scaling for better visual distribution
         threat_bar = render_threat_bar(
-            cache_data.get("threat_score"), 
-            cache_data.get("incident_type")
+            cache_data.get("threat_score"), cache_data.get("incident_type")
         )
 
         rank_display = html.Div(
@@ -243,7 +250,10 @@ def render_inspector_card_content(
                     className=f"inspector-card-incident-info {infodict.get('accent_color_class')}",
                     children=[
                         # Incident Title
-                        html.H3(infodict["incident_name"], className="inspector-card-incident-name"),
+                        html.H3(
+                            infodict["incident_name"],
+                            className="inspector-card-incident-name",
+                        ),
                         # Metadata Grid (2 columns for compact data display)
                         html.Div(
                             className="incident-meta-grid",
@@ -266,7 +276,8 @@ def render_inspector_card_content(
                                             className="meta-label",
                                         ),
                                         html.Span(
-                                            infodict["source_or_target_val"], className="meta-value"
+                                            infodict["source_or_target_val"],
+                                            className="meta-value",
                                         ),
                                     ],
                                 ),
@@ -327,14 +338,14 @@ def render_inspector_card_content(
         *incident_info_divs,
     ]
 
-def render_threat_bar(
-    score: float, incident_type: Literal["attacker", "receiver"]
-) -> html.Div:
+
+def render_threat_bar(score: float, incident_type: IncidentType) -> html.Div:
     """
     Renders a threat bar component based on the given score.
 
     Args:
         score (float): The threat score for the country, ranging from 0 to 1.
+        incident_type (IncidentType): The type of incident (attacker or receiver).
 
     Returns:
         html.Div: A Dash HTML Div component representing the threat bar.
@@ -367,7 +378,9 @@ def render_threat_bar(
             )
         )
     threat_bar_name = html.Div(
-        "Threat Level" if incident_type == "attacker" else "Target Importance",
+        "Threat Level"
+        if incident_type == IncidentType.ATTACKER
+        else "Target Importance",
         className="inspector-card-threat-bar-name",
     )
     return html.Div(
