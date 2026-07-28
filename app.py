@@ -103,7 +103,7 @@ def render_app_default_layout(APP_CACHE: dict) -> html.Div:
                                 "Incident Count", className="incident-colorbar-title"
                             ),
                             html.Div(
-                                "Attacker perspective",
+                                "Cyber attacks carried out",
                                 id="incident-colorbar-context",
                                 className="incident-colorbar-context",
                             ),
