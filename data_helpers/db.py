@@ -140,6 +140,7 @@ def get_incident_info_by_country(
     # in the middle of the ocean.
     empire_exceptions = [
         "FR",  # France (overseas territories)
+        "AU",  # Australia (overseas territories)
     ]
 
     iso_alpha_2 = iso_alpha_2.upper()
@@ -159,6 +160,10 @@ def get_incident_info_by_country(
 
     """
     result = dyadic_database.execute(query).fetchdf()
+
+    # Drop all rows where the "initiator_alpha_2" or "receiver_country_alpha_2_code" is not a valid ISO alpha-2 code
+    result = result[result[DyadicCols.INITIATOR_ALPHA_2].str.len() == 2]
+    result = result[result[DyadicCols.RECEIVER_COUNTRY_ALPHA_2_CODE].str.len() == 2]
 
     countries_gdf = gpd.GeoDataFrame.from_features(countries_json[GeoJsonKeys.FEATURES])
     country_geom = countries_gdf.set_index(GeoJsonKeys.ISO_A2_EH)[GeoJsonKeys.GEOMETRY]
@@ -198,10 +203,6 @@ def get_incident_info_by_country(
 
     # Drop all rows where the "receiver_country" is "Not available"
     result = result[result[DyadicCols.RECEIVER_COUNTRY] != "Not available"]
-
-    # Drop all rows where the "initiator_alpha_2" or "receiver_country_alpha_2_code" is not a valid ISO alpha-2 code
-    result = result[result[DyadicCols.INITIATOR_ALPHA_2].str.len() == 2]
-    result = result[result[DyadicCols.RECEIVER_COUNTRY_ALPHA_2_CODE].str.len() == 2]
 
     return result
 
