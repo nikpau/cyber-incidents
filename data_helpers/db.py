@@ -141,6 +141,7 @@ def get_incident_info_by_country(
     empire_exceptions = [
         "FR",  # France (overseas territories)
         "AU",  # Australia (overseas territories)
+        "NL",  # Netherlands (overseas territories)
     ]
 
     iso_alpha_2 = iso_alpha_2.upper()
