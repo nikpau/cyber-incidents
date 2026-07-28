@@ -202,7 +202,7 @@ def register_map_toggle_callbacks(
         # Create a human-readable label for the colorbar
         # Helps users understand which perspective they're viewing
         colorbar_context = (
-            "Attacker perspective" if is_attacker_view else "Receiver perspective"
+            "Cyber attacks carried out" if is_attacker_view else "Cyber attacks received"
         )
 
         # Transform incident counts using square root for better visual scaling
