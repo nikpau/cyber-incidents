@@ -51,13 +51,16 @@ def render_inspector_card_default():
                         ]
                     ),
                     html.P(
-                        "Between January 1, 2000 and December 31, 2024, EuRepoC recorded"
+                        "EuRepoC recorded"
                     ),
                     html.P(
                         "3146 incidents", className="inspector-card-content-highlight"
                     ),
                     html.P(
                         "in which either state-coordinated or non-state actors were involved in cybercrime incidents across the globe."
+                    ),
+                    html.P(
+                        "Officially, the dataset claims to cover incidents from Jan 1, 2000 to Dec 31, 2024, but I also found incidents from 2025, which is why the title mentions 2000 - 2025."
                     ),
                     html.P(
                         "Click on a country to inspect the arcs of incidents and view country specific information. Use the toggle button to switch between attacker and receiver perspectives."
