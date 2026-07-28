@@ -283,11 +283,8 @@ def render_inspector_card_content(
             ],
         )
 
-        # Individual indicent information:
-        # One Div with the "name" as the heading,
-        # Target/Source country/countries ("initiator_country" or "receiver_country"),
-        # Incident date ("start_date")
-        # Initiator ("initiator_name")
+        # Individual incident information cards are collected here and then
+        # wrapped in a single expandable container for the whole incident list.
         incident_info_divs = []
         for infodict in cache_data.get("incident_infos"):
             incident_info_divs.append(
@@ -359,13 +356,22 @@ def render_inspector_card_content(
                     ],
                 )
             )
+
+        incident_section = html.Details(
+            className="incident-list-card",
+            children=[
+                html.Summary(
+                    "Click to see individual incidents",
+                    className="meta-label incident-list-toggle",
+                ),
+                html.Div(className="incident-list-content", children=incident_info_divs),
+            ],
+        )
     else:
-        incident_info_divs = [
-            html.P(
-                "No recorded incidents in the dataset for this country and perspective.",
-                className="inspector-card-no-incidents",
-            )
-        ]
+        incident_section = html.P(
+            "No recorded incidents in the dataset for this country and perspective.",
+            className="inspector-card-no-incidents",
+        )
         threat_bar = render_threat_bar(0.0, cache_data.get("incident_type"))
         rank_display = html.Div(
             className="inspector-card-rank-display",
@@ -380,7 +386,7 @@ def render_inspector_card_content(
             className="inspector-card-rank-container",
             children=[threat_bar, rank_display],
         ),
-        *incident_info_divs,
+        incident_section,
     ]
 
 
