@@ -218,6 +218,27 @@
     font-size: 12px;
 }
 
+.inspector-card-incidents-per-year {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.inspector-card-incidents-per-year-title {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #f8fafc;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.inspector-card-incidents-per-year-graph {
+    width: 100%;
+    height: 220px;
+}
+
 .inspector-logo {
     display: block;
     width: 100%;

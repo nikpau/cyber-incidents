@@ -10,8 +10,9 @@ from datetime import datetime
 
 import matplotlib.colors as mc
 import pandas as pd
-from dash import html
+from dash import dcc, html
 
+from components.plots import plot_incidents_per_year
 from data_helpers.db import ATTACKER_RANKING, RECEIVER_RANKING
 from static import DyadicCols, IncidentType
 
@@ -19,6 +20,7 @@ from static import DyadicCols, IncidentType
 def render_inspector_card_default():
     """Return the default inspector card shown before any country is selected."""
     return html.Div(
+        id="floating-inspector-card",
         className="floating-inspector-card",  # Styled via assets/inspector_card.css
         children=[
             html.Img(
@@ -173,9 +175,12 @@ def cache_inspector_card_content(
         # one row per source-target pair. An incident involving N attackers and M targets
         # produces N*M rows. We collapse these back into single incident cards.
         incident_infos = []
+        incidents_per_year = {}
         incident_ids_seen = set()
         for _, row in single_country_info.iterrows():
             incident_id = row[DyadicCols.INCIDENT_ID]
+
+            update_incidents_per_year(incidents_per_year, row[DyadicCols.START_DATE])
 
             if incident_id not in incident_ids_seen:
                 incident_ids_seen.add(incident_id)
@@ -242,6 +247,7 @@ def cache_inspector_card_content(
         )
             
         cache_payload["incident_infos"] = incident_infos
+        cache_payload["incidents_per_year"] = incidents_per_year
 
     # Case: No incidents for the selected country and perspective
     else:
@@ -282,6 +288,26 @@ def render_inspector_card_content(
                 ),
             ],
         )
+        
+        # Render attacks per year chart if there are incidents per year data
+        if cache_data.get("incidents_per_year"):
+            incidents_per_year_chart = plot_incidents_per_year(
+                cache_data.get("incidents_per_year"), cache_data.get("incident_type")
+            )
+            incidents_per_year_div = html.Div(
+                className="inspector-card-incidents-per-year",
+                children=[
+                    html.H3(
+                        "Incidents Per Year",
+                        className="inspector-card-incidents-per-year-title",
+                    ),
+                    dcc.Graph(
+                        figure=incidents_per_year_chart,
+                        config={"displayModeBar": False},
+                        className="inspector-card-incidents-per-year-graph",
+                    ),
+                ],
+            )
 
         # Individual incident information cards are collected here and then
         # wrapped in a single expandable container for the whole incident list.
@@ -379,6 +405,7 @@ def render_inspector_card_content(
                 html.H1("N/A", className="inspector-card-rank-number"),
             ],
         )
+        incidents_per_year_div = html.Div()
 
     return [
         rank_heading,
@@ -386,9 +413,23 @@ def render_inspector_card_content(
             className="inspector-card-rank-container",
             children=[threat_bar, rank_display],
         ),
+        incidents_per_year_div,
         incident_section,
     ]
 
+def update_incidents_per_year(incidents_per_year: dict[int, int], start_date: str):
+    """In place update the incidents_per_year dictionary 
+    with the year extracted from start_date.
+    """
+    try:
+        year = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S").year
+        if year in incidents_per_year:
+            incidents_per_year[year] += 1
+        else:
+            incidents_per_year[year] = 1
+    except ValueError:
+        # Handle cases where start_date is not in the expected format
+        pass
 
 def render_threat_bar(score: float, incident_type: IncidentType) -> html.Div:
     """Render a segmented threat/importance bar for a normalized score in [0, 1].
