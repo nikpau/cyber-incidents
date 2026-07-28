@@ -30,17 +30,11 @@ def init_app() -> Dash:
 
     # Init app
     app = Dash(
-        __name__,
+        name="Global Cyber Incidents",
         suppress_callback_exceptions=True,
         external_stylesheets=[static.OXANIUM_FONT_URL],
+        title="Global Cyber Incidents [2000 - 2024]",
     )
-
-    # Register a function to close the DuckDB connection when the app exits
-    # @atexit.register
-    # def close_duckdb_connection():
-    #     if static.DYADIC_DATABASE is not None:
-    #         static.DYADIC_DATABASE.close()
-    #         print("DuckDB connection closed.")
 
     app.layout = html.Div(
         className="fullscreen-container",  # Styled via assets/layout.css

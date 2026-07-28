@@ -56,6 +56,7 @@ Dependencies:
 - data_helpers.db: Database query functions
 """
 
+import atexit
 import json
 
 import duckdb
@@ -213,6 +214,13 @@ def precompute_app_cache(
         >>> us_attacker_data = cache[IncidentType.ATTACKER]["US"]
         >>> global_max_incidents = cache[IncidentType.ATTACKER]["DEFAULT"]["max_incident_count"]
     """
+
+    @atexit.register
+    def close_database_connection():
+        """Ensure the DuckDB connection is closed when the program exits."""
+        if dyadic_database is not None:
+            dyadic_database.close()
+            print("✅ DuckDB connection closed.")
 
     # Initialize the two-level cache structure
     # Top level: "attacker" and "receiver" perspectives (the two ways to view the data)
