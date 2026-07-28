@@ -1,3 +1,11 @@
+"""Map rendering helpers for deck.gl layers and country-shape SVG generation.
+
+This module keeps map concerns isolated:
+- Build deck.gl JSON from cached GeoJSON.
+- Resolve country name/geometry from ISO code.
+- Convert country geometries into compact SVG data URIs for the inspector card.
+"""
+
 import math
 from urllib.parse import quote
 
@@ -15,14 +23,7 @@ from static import APP_CACHE, GeoJsonKeys, IncidentType
 def get_map_json_fast(
     base_geojson: dict,
 ) -> str:
-    """
-    Renders the map canvas component using Dash Deck and PyDeck.
-
-    Args:
-        base_geojson (dict): A dictionary containing the styled GeoJSON data.
-    Returns:
-        str: A JSON string representing the PyDeck map configuration.
-    """
+    """Return deck.gl JSON for the base country layer using pre-styled GeoJSON."""
     layers = []
     base_geojson = gpd.GeoDataFrame.from_features(base_geojson[GeoJsonKeys.FEATURES])
     geojson_layer = pdk.Layer(
@@ -58,16 +59,7 @@ def get_map_json_fast(
 
 
 def render_map_canvas() -> html.Div:
-    """
-    Renders the map canvas component using Dash Deck and PyDeck.
-
-    Args:
-        countries_geojson (gpd.GeoDataFrame): A GeoDataFrame containing the styled GeoJSON data.
-        single_country_info (gpd.GeoDataFrame | None): A GeoDataFrame containing information for a single country including arcs of incidents, or None if no country is selected.
-
-    Returns:
-        html.Div: A Dash HTML Div component containing the map canvas.
-    """
+    """Return the Dash DeckGL container; data is injected via clientside callbacks."""
     return html.Div(
         className="",  # Styled via assets/layout.css
         id="map-canvas-container",
@@ -87,6 +79,7 @@ def render_map_canvas() -> html.Div:
 def country_name_for_iso(
     countries_gdf: gpd.GeoDataFrame, iso_alpha_2: str, additional_name: str
 ) -> str:
+    """Resolve a display country name from ISO code, with optional name disambiguation."""
     selected = countries_gdf.loc[countries_gdf[GeoJsonKeys.ISO_A2_EH] == iso_alpha_2]
     if selected.empty:
         return "Unknown Country"
@@ -111,6 +104,7 @@ def country_name_for_iso(
 def geometry_for_iso(
     countries_gdf: gpd.GeoDataFrame, iso_alpha_2: str, additional_name: str
 ) -> BaseGeometry | None:
+    """Resolve a non-empty geometry from ISO code, with optional name disambiguation."""
     selected = countries_gdf.loc[countries_gdf[GeoJsonKeys.ISO_A2_EH] == iso_alpha_2]
     if selected.empty:
         return None
@@ -128,13 +122,35 @@ def geometry_for_iso(
 
 
 def build_country_shape_svg_data_uri(iso_alpha_2: str, geometry: BaseGeometry) -> str:
+    """Project a country geometry to a bounded SVG and return it as a data URI.
+
+    This function solves three geographic/rendering problems:
+
+    1. Multi-territory extraction: Countries like France include far-flung overseas
+       territories in a MultiPolygon. The bounding box becomes nearly global, making
+       the preview useless. For configured exceptions (FR), extract the largest polygon.
+
+    2. Date-line wrapping: Countries spanning the international date line (Russia, USA,
+       Fiji) have bounds > 270° wide. Detect this case and shift all negative longitudes
+       by +360° to create a continuous range for projection.
+
+    3. Geographic distortion correction: Mercator/equirectangular projections distort
+       longitude spacing by cos(latitude). A degree at the equator is longer (in pixels)
+       than a degree at 60°N. Apply cosine-latitude scaling so the country's aspect ratio
+       looks correct when rendered in the inspector card.
+
+    Output: A compact SVG data URI suitable for embedding in HTML (no network request).
+    The SVG dimensions dynamically fit the country's aspect ratio within a 640×340 canvas.
+    """
 
     empire_exceptions = [
         "FR",  # France (overseas territories)
         # "AU",  # Australia (overseas territories)
     ]
 
-    # Extract the mainland to prevent global bounding boxes
+    # Multi-territory extraction: Some countries include far-flung territories
+    # (e.g., France has Réunion, Guadeloupe, Martinique). The bounding box becomes
+    # nearly global, rendering useless. Extract the largest polygon (mainland).
     if iso_alpha_2 in empire_exceptions:
         geometry = (
             max(geometry.geoms, key=lambda p: p.area)
@@ -143,8 +159,9 @@ def build_country_shape_svg_data_uri(iso_alpha_2: str, geometry: BaseGeometry) -
         )
     minx, miny, maxx, maxy = geometry.bounds
 
-    # If the bounding box is > 270 degrees wide,
-    # it crosses the Date Line (Russia, USA, Fiji).
+    # Date-line detection and fix: If bounding box spans > 270°, it crosses the
+    # international date line (Russia spans -180°/+180°, USA spans -165° to -55°).
+    # Shift all negative longitudes by +360° to unwrap the geometry.
     if (maxx - minx) > 270:
 
         def fix_dateline(x, y, z=None):
@@ -159,14 +176,19 @@ def build_country_shape_svg_data_uri(iso_alpha_2: str, geometry: BaseGeometry) -
     span_x = max(maxx - minx, 1e-9)
     span_y = max(maxy - miny, 1e-9)
 
-    # 1. Geographic Distortion Fix (Equirectangular approximation)
+    # Geographic distortion correction: Equirectangular (simple lat/lon) projection
+    # compresses longitude spacing by cos(latitude). At the equator, 1° lon ≈ 111 km.
+    # At 60°N, cos(60°) ≈ 0.5, so 1° lon ≈ 55 km. We apply this factor to the
+    # longitude span (x-axis) before computing aspect ratio, so the rendered country
+    # has the correct shape (not stretched horizontally at high latitudes).
     mid_lat = (miny + maxy) / 2
     cos_mid_lat = math.cos(math.radians(mid_lat))
-    true_span_x = span_x * cos_mid_lat
-
+    true_span_x = span_x * cos_mid_lat  # Corrected x-span in geographic units
     true_aspect_ratio = true_span_x / span_y
 
-    # 2. Calculate dynamic UI dimensions
+    # Fit to a bounded canvas (640×340) while preserving aspect ratio.
+    # Algorithm: Start with max width, compute height; if too tall, swap to
+    # constrain by height and recompute width. Padding adds border around the shape.
     MAX_CANVAS_W = 640.0
     MAX_CANVAS_H = 340.0
     padding = 8.0
@@ -174,6 +196,7 @@ def build_country_shape_svg_data_uri(iso_alpha_2: str, geometry: BaseGeometry) -
     avail_w = MAX_CANVAS_W - (2 * padding)
     avail_h = avail_w / true_aspect_ratio
 
+    # If height overflows, constrain by height instead
     if avail_h > (MAX_CANVAS_H - (2 * padding)):
         avail_h = MAX_CANVAS_H - (2 * padding)
         avail_w = avail_h * true_aspect_ratio
@@ -181,18 +204,24 @@ def build_country_shape_svg_data_uri(iso_alpha_2: str, geometry: BaseGeometry) -
     canvas_w = avail_w + (2 * padding)
     canvas_h = avail_h + (2 * padding)
 
-    # 3. Coordinate Projection Math
-    # Since avail_w and avail_h are now perfectly proportional to the
-    # distortion-corrected bounds, a single uniform scale factor works for both axes.
+    # Single uniform scale: Since avail_w and avail_h are proportional to the
+    # corrected geographic spans, one scale factor works for both axes.
+    # scale = pixels per geographic unit (latitude in this case)
     scale = avail_h / span_y
 
     def project_point(x: float, y: float) -> tuple[float, float]:
-        # Compress longitude (X) by the same geographic factor, then scale to pixels
+        """Convert geographic (lon, lat) to SVG pixel coordinates.
+
+        Apply the cosine correction to longitude, then scale both axes uniformly.
+        Flip y-axis because SVG origin is top-left, but geographic coords increase upward.
+        """
+        # Compress longitude by cos(mid_lat), then scale from geographic to pixels
         dx_true = (x - minx) * cos_mid_lat
         px = padding + (dx_true * scale)
 
-        # Standard scale for latitude (Y), flip for SVG's top-left origin
-        py = padding + avail_h - ((y - miny) * scale)
+        # Latitude: scale uniformly, then flip (avail_h - ...) for SVG top-left origin
+        dy = y - miny
+        py = padding + avail_h - (dy * scale)
         return px, py
 
     path_commands: list[str] = []
@@ -231,9 +260,7 @@ def build_country_shape_svg_data_uri(iso_alpha_2: str, geometry: BaseGeometry) -
 
 
 def get_colorbar_ticks(incident_type: IncidentType) -> html.Div:
-    """
-    Returns the maximum incident count for the colorbar based on the current perspective (attacker or receiver).
-    """
+    """Return colorbar ticks for the current perspective using configured scale factor."""
     max_count = APP_CACHE[incident_type]["DEFAULT"]["max_incident_count"]
     mid_count = int((max_count // 2) ** (static.COLORBAR_SCALE_FACTOR))
     return html.Div(

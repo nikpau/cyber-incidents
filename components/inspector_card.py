@@ -1,3 +1,10 @@
+"""Inspector card rendering and cache payload helpers.
+
+This module separates two concerns:
+- Build a serializable cache payload from country-level incident data.
+- Render Dash HTML components from that payload at interaction time.
+"""
+
 import colorsys
 from datetime import datetime
 
@@ -10,7 +17,7 @@ from static import DyadicCols, IncidentType
 
 
 def render_inspector_card_default():
-    """Renders the floating overlay card component."""
+    """Return the default inspector card shown before any country is selected."""
     return html.Div(
         className="floating-inspector-card",  # Styled via assets/inspector_card.css
         children=[
@@ -63,9 +70,19 @@ def cache_inspector_card_content(
     single_country_info: pd.DataFrame | None,
     incident_type: IncidentType,
 ) -> list[html.Div | html.P | html.A]:
-    """
-    Caches the content of the inspector card for a specific country and incident type
-    into a dictionary of strings.
+    """Build a cache-friendly payload for one country and one perspective.
+
+    The payload is plain Python data (dict/list/scalars) so it can be stored in
+    app-level cache and later rendered without recomputing database-derived values.
+
+    Payload contains:
+    - rank: Global ranking for the country's threat level (1-indexed, or N/A if not ranked)
+    - threat_score: Cube-root normalized incident count [0, 1] for bar visualization
+    - incident_infos: List of deduplicated incidents involving this country
+
+    Deduplication strategy: Dyadic database may have multiple rows per incident
+    (one per source/target pair). We deduplicate by incident id and reconstruct
+    the full source/target list from all rows sharing that id.
     """
     cache_payload = {}
     cache_payload["incident_type"] = incident_type
@@ -79,14 +96,19 @@ def cache_inspector_card_content(
 
     # 2-column layout with threat bar on the left and rank on the right
     if single_country_info is not None and not single_country_info.empty:
+        # Extract ISO code from first row (all rows for this country have same code).
         a_current_alpha_2 = single_country_info[DyadicCols.INITIATOR_ALPHA_2].iloc[0]
         r_current_alpha_2 = single_country_info[
             DyadicCols.RECEIVER_COUNTRY_ALPHA_2_CODE
         ].iloc[0]
 
+        # Rank lookup: Look up pre-computed global rank for this country.
+        # The ranking tables (ATTACKER_RANKING, RECEIVER_RANKING) sort all countries by
+        # incident count; countries with no incidents are excluded from the ranking.
         if incident_type == IncidentType.ATTACKER:
             has_rank = a_current_alpha_2 in a_ranks[DyadicCols.INITIATOR_ALPHA_2].values
             if has_rank:
+                # Rank is 1-indexed; threat_score is raw incident_count normalized to [0, 1]
                 rank = a_ranks.loc[
                     a_ranks[DyadicCols.INITIATOR_ALPHA_2] == a_current_alpha_2
                 ]["rank"].item()
@@ -100,9 +122,11 @@ def cache_inspector_card_content(
                     else 0.0
                 )
             else:
+                # Country has incidents but didn't make the ranking (usually thresholded)
                 rank = None
                 threat_score = 0.0
         else:
+            # Identical logic for receiver perspective
             has_rank = (
                 r_current_alpha_2
                 in r_ranks[DyadicCols.RECEIVER_COUNTRY_ALPHA_2_CODE].values
@@ -126,27 +150,41 @@ def cache_inspector_card_content(
                 rank = None
                 threat_score = 0.0
 
-        # Cube root scaling for better visual distribution
+        # Cube-root normalization: x^(1/3) compresses the [0, 1] range nonlinearly.
+        # Rationale: Raw incident counts are often heavily skewed (e.g., top countries have
+        # 100+ incidents, most have <5). Cube-root keeps ordering while spreading lower
+        # values across the bar, so the 8-segment threat bar is visually informative even
+        # for countries with very few incidents.
         cache_payload["threat_score"] = threat_score ** (1 / 3)
         cache_payload["rank"] = f"#{rank}" if rank is not None else "N/A"
         cache_payload["total_ranks"] = (
             f"/ {len(a_ranks) if incident_type == 'attacker' else len(r_ranks)}"
         )
 
-        # Individual indicent information:
+        # Deduplication: Build one card entry per incident id, collecting all
+        # source/target countries from rows sharing that id.
+        # Why deduplication is needed: The dyadic table represents each incident as
+        # one row per source-target pair. An incident involving N attackers and M targets
+        # produces N*M rows. We collapse these back into single incident cards.
         incident_infos = []
-        incident_ids_seen = set()  # To avoid duplicates
+        incident_ids_seen = set()
         for _, row in single_country_info.iterrows():
             incident_id = row[DyadicCols.INCIDENT_ID]
 
             if incident_id not in incident_ids_seen:
                 incident_ids_seen.add(incident_id)
             else:
+                # Skip rows for this incident; we already processed it
                 continue
 
+            # Perspective determines what the "opposing side" means:
+            # - Attacker view: selected country is source, show targets
+            # - Receiver view: selected country is target, show sources
             source_or_target_label = (
                 "Source(s)" if incident_type == IncidentType.RECEIVER else "Target(s)"
             )
+            # Gather all unique countries on the opposing side for this incident id.
+            # Use dropna() + unique() to handle missing/duplicate values in the dyadic table.
             source_or_target_val = (
                 ", ".join(
                     single_country_info.loc[
@@ -202,15 +240,7 @@ def cache_inspector_card_content(
 def render_inspector_card_content(
     cache_data: dict[str, str],
 ) -> list[html.Div | html.P | html.A]:
-    """
-    Renders the content of the inspector card based on cached data.
-
-    Args:
-        cache_data (dict[str, str]): A dictionary containing cached content for the inspector card.
-
-    Returns:
-        list: A list of Dash HTML components representing the content of the inspector card.
-    """
+    """Render inspector card components from a precomputed cache payload."""
     # Heading "Attacker Rank:" or "Receiver Rank:"
     rank_heading = html.H2(
         f"{cache_data.get('rank_heading')}",
@@ -340,15 +370,11 @@ def render_inspector_card_content(
 
 
 def render_threat_bar(score: float, incident_type: IncidentType) -> html.Div:
-    """
-    Renders a threat bar component based on the given score.
+    """Render a segmented threat/importance bar for a normalized score in [0, 1].
 
-    Args:
-        score (float): The threat score for the country, ranging from 0 to 1.
-        incident_type (IncidentType): The type of incident (attacker or receiver).
-
-    Returns:
-        html.Div: A Dash HTML Div component representing the threat bar.
+    The bar has 8 segments, each representing a threshold at i/8 (0, 0.125, 0.25, ...).
+    Segments are colored green → yellow → red as score increases, reflecting threat level.
+    For receiver view, the label changes to "Target Importance" (strategic value).
     """
     cmap = [
         "#048757",
@@ -364,6 +390,7 @@ def render_threat_bar(score: float, incident_type: IncidentType) -> html.Div:
     num_bars = len(cmap)
     for i in range(num_bars):
         bar_color = cmap[i]
+        # Segment fill threshold: each step lights up once score crosses i/num_bars.
         if not score > (i / num_bars):
             bar_color = "#696969"  # Darken the color for unfilled bars
         bars.append(
@@ -393,19 +420,7 @@ def render_threat_bar(score: float, incident_type: IncidentType) -> html.Div:
 
 
 def lighten_or_darken_color(color: str, amount: float) -> str:
-    """
-    Lightens or darkens a color by a specified amount.
-    Proudly borrowed from https://stackoverflow.com/questions/37765197/darken-or-lighten-a-color-in-matplotlib
-
-    Args:
-        color (str): The color (string, hexcode, RGB tuple) to be lightened or darkened.
-        amount (float): The amount to lighten or darken the color.
-        Values greater than 1 will darken the color, while values
-        between 0 and 1 will lighten it.
-
-    Returns:
-        str: The modified hex color code.
-    """
+    """Return a lightened/darkened color by scaling luminance in HLS space."""
     try:
         c = mc.cnames[color]
     except KeyError:
@@ -416,15 +431,7 @@ def lighten_or_darken_color(color: str, amount: float) -> str:
 
 
 def date_to_human_readable(date_str: str) -> str:
-    """
-    Converts a date string in the format 'YYYY-MM-DD' to a human-readable format like 'January 1, 2024'.
-
-    Args:
-        date_str (str): The date string in 'YYYY-MM-DD' format.
-
-    Returns:
-        str: The date in a human-readable format, e.g., 'January 1, 2024'.
-    """
+    """Format database datetime strings as "Month DD, YYYY"; fallback to input."""
     try:
         date_obj = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
         return date_obj.strftime("%B %d, %Y")
