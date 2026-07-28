@@ -151,6 +151,10 @@
     padding-top: 12px;
 }
 
+.incident-description-toggle {
+    cursor: crosshair;
+}
+
 .inspector-card-incident-description {
     font-size: 13px;
     line-height: 1.5;

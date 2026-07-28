@@ -286,10 +286,17 @@ def render_inspector_card_content(
                         html.Div(
                             className="incident-description-container",
                             children=[
-                                html.Span("Description", className="meta-label"),
-                                html.P(
-                                    f"{infodict['description']}",
-                                    className="inspector-card-incident-description",
+                                html.Details(
+                                    children=[
+                                        html.Summary(
+                                            "Description",
+                                            className="meta-label incident-description-toggle",
+                                        ),
+                                        html.P(
+                                            f"{infodict['description']}",
+                                            className="inspector-card-incident-description",
+                                        ),
+                                    ]
                                 ),
                             ],
                         ),
