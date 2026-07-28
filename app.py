@@ -60,7 +60,7 @@ def render_app_default_layout(APP_CACHE: dict) -> html.Div:
                                 ],
                             ),
                             html.H1(
-                                "Global Cyber Incidents [2000 - 2024]",
+                                "Global Cyber Incidents [2000 - 2025]",
                                 className="headline-title",
                             ),
                             html.P(
@@ -160,7 +160,7 @@ def init_app() -> Dash:
         name="Global Cyber Incidents",
         suppress_callback_exceptions=True,
         external_stylesheets=[static.OXANIUM_FONT_URL],
-        title="Global Cyber Incidents [2000 - 2024]",
+        title="Global Cyber Incidents",
     )
 
     app.layout = render_app_default_layout(APP_CACHE=APP_CACHE)
