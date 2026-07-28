@@ -131,7 +131,7 @@
 }
 
 .meta-label {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 600;
     color: #64748b; /* Muted slate */
     text-transform: uppercase;
@@ -156,7 +156,7 @@
 }
 
 .inspector-card-incident-description {
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.5;
     color: #94a3b8;
     margin: 4px 0 0 0;
