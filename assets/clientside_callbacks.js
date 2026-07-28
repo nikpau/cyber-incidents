@@ -21,7 +21,7 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
                     "getTargetColor": [0, 0, 205, 255],
                     "autoHighlight": true,
                     "highlightColor": [255, 255, 255, 128],
-                    "getWidth": 4,
+                    "getWidth": 6,
                     "getTilt": 15,
                     "widthMinPixels": 2,
                 };
