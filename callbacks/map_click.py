@@ -26,6 +26,7 @@ def register_map_click_callback(
         Output("inspector-card-title", "children"),
         Output("inspector-card-image", "src"),
         Output("inspector-card-content", "children"),
+        Output("selected-country-store", "data", allow_duplicate=True),
         Input("map-canvas", "clickInfo"),
         State("toggle-incident-type", "n_clicks"),
         prevent_initial_call=True,
@@ -41,11 +42,13 @@ def register_map_click_callback(
 
         if clickInfo is None:
             # No country selected, render the default map view.
+            default_inspector_children = render_inspector_card_default().children
             return (
                 get_map_json_fast(base_geojson=base_map_dict),
                 APP_CACHE[incident_type]["DEFAULT"]["name"],
                 APP_CACHE[incident_type]["DEFAULT"]["svg"],
-                render_inspector_card_default(),
+                default_inspector_children[2].children,
+                None,
             )
 
         # Extract the ISO alpha-2 country code from dash_deck picking info.
@@ -53,13 +56,13 @@ def register_map_click_callback(
             clickInfo.get("object") if isinstance(clickInfo, dict) else None
         )
         if not clicked_object:
-            return no_update, no_update, no_update, no_update
+            return no_update, no_update, no_update, no_update, no_update
 
         iso_alpha_2 = clicked_object.get(GeoJsonKeys.ISO_A2_EH) or clicked_object.get(
             GeoJsonKeys.PROPERTIES, {}
         ).get(GeoJsonKeys.ISO_A2_EH)
         if not iso_alpha_2:
-            return no_update, no_update, no_update, no_update
+            return no_update, no_update, no_update, no_update, no_update
 
         clicked_object_name = clicked_object.get("name")
 
@@ -89,4 +92,5 @@ def register_map_click_callback(
             render_inspector_card_content(
                 inspector_card_content,
             ),
+            iso_alpha_2,
         )

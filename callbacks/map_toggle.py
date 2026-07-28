@@ -33,7 +33,7 @@ from components.inspector_card import (
     render_inspector_card_content,
 )
 from components.map import get_map_json_fast
-from static import APP_CACHE, IncidentType, DyadicCols, GeoJsonKeys
+from static import APP_CACHE, IncidentType
 
 
 def register_map_toggle_callbacks(
@@ -73,64 +73,6 @@ def register_map_toggle_callbacks(
                   active perspective and country combination.
     """
 
-    def extract_iso_alpha_2(click_info: dict | None) -> str | None:
-        """
-        Extract the ISO Alpha-2 country code from a Dash deck.gl click event payload.
-
-        When a user clicks on a country in the map visualization, Dash captures the click
-        event and includes information about the clicked GeoJSON feature. This function
-        safely extracts the ISO Alpha-2 country code (a two-letter code like 'US', 'CN', 'RU')
-        from the nested click event structure.
-
-        The function handles two common GeoJSON property locations:
-        1. Direct property: clicked_object.iso_a2_eh
-        2. Nested property: clicked_object.properties.iso_a2_eh
-
-        This flexibility accommodates different GeoJSON feature structure conventions.
-
-        Defensive Checks:
-        - Validates that click_info is a dictionary (not None or other types)
-        - Validates that the clicked_object is a dictionary
-        - Gracefully returns None if any expected structure is missing
-
-        Args:
-            click_info (dict | None): The click event payload from deck.gl map component.
-                                     Structure:
-                                     {
-                                         "object": {
-                                             "iso_a2_eh": "US",  # or nested in "properties"
-                                             "properties": {...}
-                                         },
-                                         ...other click metadata...
-                                     }
-                                     Can be None if no click occurred.
-
-        Returns:
-            str | None: The ISO Alpha-2 country code (e.g., 'US', 'CN', 'RU', 'FR') if
-                       successfully extracted, or None if the click_info structure doesn't
-                       contain expected data.
-
-        Examples:
-            >>> extract_iso_alpha_2({"object": {"iso_a2_eh": "US"}})
-            'US'
-            >>> extract_iso_alpha_2({"object": {"properties": {"iso_a2_eh": "CN"}}})
-            'CN'
-            >>> extract_iso_alpha_2(None)
-            None
-            >>> extract_iso_alpha_2({"object": {}})
-            None
-        """
-        if not isinstance(click_info, dict):
-            return None
-
-        clicked_object = click_info.get("object")
-        if not isinstance(clicked_object, dict):
-            return None
-
-        return clicked_object.get(GeoJsonKeys.ISO_A2_EH) or clicked_object.get(
-            GeoJsonKeys.PROPERTIES, {}
-        ).get(GeoJsonKeys.ISO_A2_EH)
-
     @app.callback(
         Output("base-map-store", "data", allow_duplicate=True),
         Output("arc-data-store", "data", allow_duplicate=True),
@@ -138,12 +80,14 @@ def register_map_toggle_callbacks(
         Output("incident-colorbar-context", "children"),
         Output("incident-colorbar-mid", "children"),
         Output("incident-colorbar-max", "children"),
+        Output("inspector-card-title", "children", allow_duplicate=True),
+        Output("inspector-card-image", "src", allow_duplicate=True),
         Output("inspector-card-content", "children", allow_duplicate=True),
         Input("toggle-incident-type", "n_clicks"),
-        State("map-canvas", "clickInfo"),
+        State("selected-country-store", "data"),
         prevent_initial_call=True,
     )
-    def toggle_incident_type(n_clicks: int, clickInfo):
+    def toggle_incident_type(n_clicks: int, selected_country):
         """
         Toggle between attacker and receiver perspectives and update all related visualizations.
 
@@ -273,9 +217,13 @@ def register_map_toggle_callbacks(
         max_count = str(int(max_count))
 
         # Handle the case where no country is currently selected on the map
-        if clickInfo is None:
+        if not selected_country or selected_country not in APP_CACHE[incident_type]:
+            default_inspector_children = no_update
             # No country selected, render the default global map view
             # Return data for all countries with no specific country highlighted
+            from components.inspector_card import render_inspector_card_default
+
+            default_inspector_children = render_inspector_card_default().children
             return (
                 # GeoJSON base map data (retrieved from cache and formatted for visualization)
                 get_map_json_fast(
@@ -293,18 +241,19 @@ def register_map_toggle_callbacks(
                 mid_count,
                 # Scaled maximum value
                 max_count,
-                # Don't update the inspector card (no country selected)
-                no_update,
+                # Default inspector title
+                APP_CACHE[incident_type]["DEFAULT"]["name"],
+                # Default inspector image
+                APP_CACHE[incident_type]["DEFAULT"]["svg"],
+                # Default inspector body content
+                default_inspector_children[2].children,
             )
-
-        # Extract the ISO Alpha-2 country code from the click event
-        iso_alpha_2 = extract_iso_alpha_2(clickInfo)
 
         # Retrieve the pre-computed inspector card content for this country
         # and perspective combination from the cache
         # The cache contains summary statistics, incident lists, and formatted
         # information about attacks involving this country
-        inspector_card_content = APP_CACHE[incident_type][iso_alpha_2][
+        inspector_card_content = APP_CACHE[incident_type][selected_country][
             "inspector_card_content"
         ]
 
@@ -317,7 +266,7 @@ def register_map_toggle_callbacks(
             # Arc data showing flow lines from/to the selected country based on perspective
             # For attacker view: arrows showing where this country attacked
             # For receiver view: arrows showing who attacked this country
-            APP_CACHE[incident_type][iso_alpha_2]["arc_data"],
+            APP_CACHE[incident_type][selected_country]["arc_data"],
             # Button styling
             button_class,
             # Perspective label
@@ -326,6 +275,10 @@ def register_map_toggle_callbacks(
             mid_count,
             # Scaled maximum value
             max_count,
+            # Country name for selected country
+            APP_CACHE[incident_type][selected_country]["name"],
+            # Country image for selected country
+            APP_CACHE[incident_type][selected_country]["svg"],
             # Render the inspector card with country-specific incident data
             render_inspector_card_content(inspector_card_content),
         )

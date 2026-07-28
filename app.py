@@ -14,6 +14,7 @@ from dash import (
 
 import static
 from callbacks.map_click import register_map_click_callback
+from callbacks.map_reset import register_map_reset_callback
 from callbacks.map_toggle import register_map_toggle_callbacks
 from components.inspector_card import render_inspector_card_default
 from components.map import get_colorbar_ticks, get_map_json_fast, render_map_canvas
@@ -24,19 +25,8 @@ from data_helpers.db import (
 from static import IncidentType
 
 
-def init_app() -> Dash:
-    """Initializes the Dash app and returns the app instance."""
-    APP_CACHE: dict[str, dict[str, dict]] = static.APP_CACHE
-
-    # Init app
-    app = Dash(
-        name="Global Cyber Incidents",
-        suppress_callback_exceptions=True,
-        external_stylesheets=[static.OXANIUM_FONT_URL],
-        title="Global Cyber Incidents [2000 - 2024]",
-    )
-
-    app.layout = html.Div(
+def render_app_default_layout(APP_CACHE: dict) -> html.Div:
+    return html.Div(
         className="fullscreen-container",  # Styled via assets/layout.css
         children=[
             dcc.Store(
@@ -46,6 +36,7 @@ def init_app() -> Dash:
                 ),
             ),
             dcc.Store(id="arc-data-store", data=[]),
+            dcc.Store(id="selected-country-store", data=None),
             html.Div(
                 className="desktop-only-content",
                 children=[
@@ -57,6 +48,17 @@ def init_app() -> Dash:
                     html.Div(
                         className="headline",
                         children=[
+                            html.Button(
+                                id="reset-map-button",
+                                n_clicks=0,
+                                className="floating-reset-button",
+                                children=[
+                                    html.Span(
+                                        "Reset Map",
+                                        className="reset-button-label",
+                                    ),
+                                ],
+                            ),
                             html.H1(
                                 "Global Cyber Incidents [2000 - 2024]",
                                 className="headline-title",
@@ -148,11 +150,26 @@ def init_app() -> Dash:
         ],
     )
 
+
+def init_app() -> Dash:
+    """Initializes the Dash app and returns the app instance."""
+    APP_CACHE: dict[str, dict[str, dict]] = static.APP_CACHE
+
+    # Init app
+    app = Dash(
+        name="Global Cyber Incidents",
+        suppress_callback_exceptions=True,
+        external_stylesheets=[static.OXANIUM_FONT_URL],
+        title="Global Cyber Incidents [2000 - 2024]",
+    )
+
+    app.layout = render_app_default_layout(APP_CACHE=APP_CACHE)
     register_map_toggle_callbacks(app=app)
     register_map_click_callback(
         app=app,
         countries_json=static.COUNTRIES_JSON,
     )
+    register_map_reset_callback(app=app)
 
     clientside_callback(
         ClientsideFunction(namespace="clientside", function_name="update_map_canvas"),
