@@ -42,6 +42,10 @@
     transition: color 0.2s ease;
 }
 
+#inspector-card-content p:not(.inspector-card-content-highlight) {
+    text-align: justify;
+}
+
 /* Custom Scrollbar for the dark theme */
 .floating-inspector-card::-webkit-scrollbar {
     width: 6px;

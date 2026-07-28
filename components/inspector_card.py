@@ -45,7 +45,7 @@ def render_inspector_card_default():
                                 rel="noopener noreferrer",
                                 className="inspector-inline-link",
                             ),
-                            " by the European Repository of Cyber Incidents (EuRepoC) to visualize criminal activity in cyberspace.",
+                            " by the European Repository of Cyber Incidents (EuRepoC) to visualize criminal activity in the cyberspace.",
                         ]
                     ),
                     html.P(
@@ -59,6 +59,12 @@ def render_inspector_card_default():
                     ),
                     html.P(
                         "Click on a country to inspect the arcs of incidents and view country specific information. Use the toggle button to switch between attacker and receiver perspectives."
+                    ),
+                    html.H3(
+                        "Methodology",
+                    ),
+                    html.P(
+                        "This visualization uses the dyadic table of the EuRepoC dataset, which represents each incident as one row per source-target pair. An incident involving N attackers and M targets produces N*M rows. During data pre-processing, I only keep rows where both the source and target countries have valid ISO alpha-2 codes, i.e., only incidents with known countries on both sides are visualized. The EuRepoC dataset also contains incidents with either unknown or broad-region targets (e.g., 'Not available', 'Global', 'Europe', 'Middle East'). These incidents are excluded from the visualization, as they cannot be mapped to a specific country.",
                     ),
                 ],
             ),
