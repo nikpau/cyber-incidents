@@ -1,38 +1,38 @@
 .floating-inspector-card {
     position: absolute;
-    top: 0px;
-    bottom: 0px;
-    right: 0px;
+    top: 0;
+    bottom: 0;
+    right: 0;
     z-index: 10;
-    width: 450px;
-    padding-bottom: 24px;
+    width: var(--inspector-width, clamp(20rem, 29vw, 28rem));
+    padding-bottom: clamp(1rem, 0.8rem + 0.9vw, 1.5rem);
     overflow-y: auto;
     background-color: #061527e0;
     backdrop-filter: blur(12px);
     border-left: 1px solid rgba(14, 165, 233, 0.3); /* Subtle edge highlight */
-    padding: 24px;
+    padding: clamp(1rem, 0.8rem + 1vw, 1.5rem);
     box-sizing: border-box;
     color: #f8fafc;
     font-family: "Oxanium", sans-serif;
     display: flex;
     flex-direction: column;
-    gap: 16px; /* consistent spacing between main sections */
+    gap: clamp(0.75rem, 0.65rem + 0.4vw, 1rem); /* consistent spacing between main sections */
 }
 
 /* Centered title with a subtle gradient effect */
 .inspector-card-title {
-    font-size: 36px;
+    font-size: clamp(1.6rem, 1.05rem + 1.7vw, 2.25rem);
     font-weight: 700;
-    margin: 0 0 8px 0;
+    margin: 0 0 0.5rem 0;
     color: #f1f5f9;
     letter-spacing: 0.5px;
     text-align: center;
 }
 
 .inspector-card-content-highlight {
-    font-size: 32px;
+    font-size: clamp(1.45rem, 1rem + 1.4vw, 2rem);
     font-weight: 600;
-    margin: 4px 0 0 0;
+    margin: 0.25rem 0 0 0;
     text-align: center;
 }
 
@@ -53,15 +53,16 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 16px;
+    padding-bottom: clamp(0.75rem, 0.65rem + 0.4vw, 1rem);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .inspector-card-rank-number {
-    font-size: 64px;
+    font-size: clamp(2.2rem, 1.4rem + 2.8vw, 4rem);
     font-weight: 700;
     margin: 0;
     background: linear-gradient(180deg, #f8fafc 0%, #94a3b8 100%);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -70,23 +71,23 @@
     display: flex;
     flex-direction: row;
     align-items: end;
-    gap: 4px; /* Space between rank number and subtext */
+    gap: 0.25rem; /* Space between rank number and subtext */
 }
 
 .inspector-card-rank-subtext {
-    font-size: 18px;
+    font-size: clamp(0.9rem, 0.78rem + 0.45vw, 1.12rem);
     color: #94a3b8;
     margin: 0;
-    padding: 0 0 15px 0; /* Padding to align with the rank number */
+    padding: 0 0 clamp(0.45rem, 0.3rem + 0.5vw, 0.95rem) 0; /* Padding to align with the rank number */
 }
 
 /* --- INCIDENT SUB-CARDS --- */
 .inspector-card-incident-info {
     background: rgba(255, 255, 255, 0.03); /* Slight glass effect */
     border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 6px;
-    padding: 16px;
-    margin-bottom: 12px;
+    border-radius: 0.38rem;
+    padding: clamp(0.75rem, 0.65rem + 0.45vw, 1rem);
+    margin-bottom: clamp(0.55rem, 0.45rem + 0.35vw, 0.75rem);
     transition: background 0.2s ease;
 }
 
@@ -103,9 +104,9 @@
 }
 
 .inspector-card-incident-name {
-    font-size: 18px;
+    font-size: clamp(0.95rem, 0.8rem + 0.5vw, 1.12rem);
     font-weight: 600;
-    margin: 0 0 12px 0;
+    margin: 0 0 0.75rem 0;
     color: #f1f5f9;
     letter-spacing: 0.5px;
 }
@@ -114,8 +115,8 @@
 .incident-meta-grid {
     display: grid;
     grid-template-columns: 16ch auto; /* Two columns */
-    gap: 12px 8px;
-    margin-bottom: 16px;
+    gap: 0.75rem 0.5rem;
+    margin-bottom: 1rem;
 }
 
 .meta-item {
@@ -124,7 +125,7 @@
 }
 
 .meta-label {
-    font-size: 12px;
+    font-size: clamp(0.62rem, 0.56rem + 0.18vw, 0.75rem);
     font-weight: 600;
     color: #64748b; /* Muted slate */
     text-transform: uppercase;
@@ -133,7 +134,7 @@
 }
 
 .meta-value {
-    font-size: 14px;
+    font-size: clamp(0.75rem, 0.7rem + 0.2vw, 0.88rem);
     color: #cbd5e1;
     text-overflow: ellipsis;
 }
@@ -141,13 +142,13 @@
 /* --- DESCRIPTION --- */
 .incident-description-container {
     border-top: 1px dashed rgba(255, 255, 255, 0.1);
-    padding-top: 12px;
+    padding-top: 0.75rem;
 }
 
 .incident-list-card {
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
-    padding: 12px 14px;
+    border-radius: 0.5rem;
+    padding: 0.75rem 0.88rem;
     background: rgba(255, 255, 255, 0.03);
 }
 
@@ -156,8 +157,8 @@
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 14px;
+    gap: 0.38rem;
+    font-size: clamp(0.72rem, 0.66rem + 0.2vw, 0.88rem);
     font-weight: 700;
     color: #f8fafc;
     letter-spacing: 0.04em;
@@ -170,7 +171,7 @@
 
 .incident-list-card summary::after {
     content: "▾";
-    font-size: 14px;
+    font-size: clamp(0.72rem, 0.66rem + 0.2vw, 0.88rem);
     color: #f8fafc;
     transition: transform 0.2s ease;
 }
@@ -182,8 +183,8 @@
 .incident-list-content {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-top: 12px;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
 }
 
 .incident-description-toggle {
@@ -191,10 +192,10 @@
 }
 
 .inspector-card-incident-description {
-    font-size: 14px;
+    font-size: clamp(0.75rem, 0.7rem + 0.2vw, 0.88rem);
     line-height: 1.5;
     color: #94a3b8;
-    margin: 4px 0 0 0;
+    margin: 0.25rem 0 0 0;
     text-align: left;
 }
 
@@ -206,8 +207,8 @@
 }
 
 .inspector-card-threat-bar-name {
-    margin-top: 4px;
-    font-size: 14px;
+    margin-top: 0.25rem;
+    font-size: clamp(0.75rem, 0.7rem + 0.2vw, 0.88rem);
     color: #f1f5f9;
 }
 
@@ -215,19 +216,19 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    font-size: 12px;
+    font-size: clamp(0.62rem, 0.56rem + 0.18vw, 0.75rem);
 }
 
 .inspector-card-incidents-per-year {
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
-    padding: 12px 14px;
+    border-radius: 0.5rem;
+    padding: 0.75rem 0.88rem;
     background: rgba(255, 255, 255, 0.03);
 }
 
 .inspector-card-incidents-per-year-title {
-    margin: 0 0 8px 0;
-    font-size: 14px;
+    margin: 0 0 0.5rem 0;
+    font-size: clamp(0.72rem, 0.66rem + 0.2vw, 0.88rem);
     font-weight: 700;
     color: #f8fafc;
     letter-spacing: 0.04em;
@@ -236,17 +237,17 @@
 
 .inspector-card-incidents-per-year-graph {
     width: 100%;
-    height: 220px;
+    height: clamp(10rem, 8rem + 6vw, 13.8rem);
 }
 
 .inspector-logo {
     display: block;
     width: 100%;
     max-width: 100%;
-    max-height: 240px;
+    max-height: clamp(9rem, 7rem + 8vw, 15rem);
     object-fit: contain;
     height: auto;
-    margin: 0 0 6px 0;
+    margin: 0 0 0.38rem 0;
 }
 
 .inspector-card-country-subheading {
@@ -274,7 +275,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 24px;
+    padding: clamp(0.85rem, 0.65rem + 0.9vw, 1.5rem);
     background: rgba(2, 6, 23, 0.65); /* Slightly more transparent */
     backdrop-filter: blur(8px); /* Stronger blur for depth */
 }
@@ -282,11 +283,11 @@
 /* MAIN MODAL WINDOW */
 .incident-info-modal {
     position: relative;
-    width: min(920px, 100%);
-    max-height: min(88vh, 920px);
+    width: min(57.5rem, 100%);
+    max-height: min(88vh, 57.5rem);
     overflow-y: auto;
-    border-radius: 16px;
-    padding: 32px; /* Increased breathing room */
+    border-radius: clamp(0.8rem, 0.65rem + 0.45vw, 1rem);
+    padding: clamp(1rem, 0.7rem + 1.2vw, 2rem); /* Increased breathing room */
     background: linear-gradient(145deg, rgba(15, 30, 50, 0.95) 0%, rgba(2, 6, 23, 0.98) 100%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 
@@ -302,9 +303,9 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 24px;
-    margin-bottom: 20px;
-    padding-bottom: 20px;
+    gap: clamp(0.85rem, 0.65rem + 0.8vw, 1.5rem);
+    margin-bottom: clamp(0.7rem, 0.5rem + 0.8vw, 1.25rem);
+    padding-bottom: clamp(0.7rem, 0.5rem + 0.8vw, 1.25rem);
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -312,23 +313,24 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 12px;
+    gap: 0.75rem;
     flex: 1;
 }
 
 .incident-info-modal-title {
     margin: 0;
-    font-size: 32px;
+    font-size: clamp(1.3rem, 1rem + 1.2vw, 2rem);
     font-weight: 800;
     letter-spacing: -0.02em;
     background: linear-gradient(90deg, #ffffff 0%, #cbd5e1 100%);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
 .incident-info-modal-incident-name {
     margin: 0;
-    font-size: 18px;
+    font-size: clamp(0.88rem, 0.78rem + 0.35vw, 1.12rem);
     font-weight: 600;
     color: #38bdf8;
 }
@@ -337,8 +339,8 @@
 .incident-info-modal-rank-pill {
     display: inline-flex;
     align-items: center; /* Changed from baseline for better symmetry */
-    gap: 8px;
-    padding: 6px 16px;
+    gap: 0.5rem;
+    padding: 0.38rem 1rem;
     border-radius: 999px;
     background: linear-gradient(90deg, rgba(56, 189, 248, 0.1), rgba(56, 189, 248, 0.02));
     border: 1px solid rgba(56, 189, 248, 0.2);
@@ -347,7 +349,7 @@
 }
 
 .incident-info-modal-rank-number {
-    font-size: 24px;
+    font-size: clamp(1rem, 0.82rem + 0.7vw, 1.5rem);
     font-weight: 700;
     margin: 0;
     color: #38bdf8; /* Accent color to make it pop */
@@ -356,9 +358,9 @@
 /* FLAG CARD */
 .incident-info-modal-flag-card {
     flex-shrink: 0;
-    width: 220px; /* Fixed width prevents awkward scaling */
-    padding: 16px;
-    border-radius: 12px;
+    width: clamp(9.5rem, 8.2rem + 4.3vw, 13.75rem); /* Fixed width prevents awkward scaling */
+    padding: clamp(0.65rem, 0.5rem + 0.6vw, 1rem);
+    border-radius: clamp(0.5rem, 0.4rem + 0.35vw, 0.75rem);
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid rgba(255, 255, 255, 0.05);
     box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
@@ -374,7 +376,7 @@
     display: block;
     width: 100%;
     height: auto;
-    border-radius: 6px;
+    border-radius: 0.38rem;
     object-fit: contain;
 }
 
@@ -389,8 +391,8 @@
 .incident-info-modal-threat-card,
 .incident-info-modal-description-card {
     border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 12px;
-    padding: 24px;
+    border-radius: clamp(0.55rem, 0.45rem + 0.4vw, 0.75rem);
+    padding: clamp(0.8rem, 0.6rem + 0.9vw, 1.5rem);
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
@@ -402,9 +404,9 @@
     justify-content: center;
     align-items: flex-start;
     text-align: left;
-    gap: 10px;
+    gap: 0.63rem;
     width: fit-content;
-    margin-top: 4px;
+    margin-top: 0.25rem;
     flex-shrink: 0;
 }
 
@@ -415,14 +417,14 @@
 
 /* TYPOGRAPHY UPDATES */
 .inspector-card-incident-name {
-    margin: 0 0 16px 0;
-    font-size: 20px;
+    margin: 0 0 1rem 0;
+    font-size: clamp(1rem, 0.86rem + 0.5vw, 1.25rem);
     font-weight: 600;
     color: #f1f5f9;
 }
 
 .meta-label {
-    font-size: 11px;
+    font-size: clamp(0.58rem, 0.54rem + 0.15vw, 0.69rem);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     font-weight: 600;
@@ -431,30 +433,30 @@
 
 .incident-info-modal-metadata-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 12px;
-    margin: 14px 0 16px 0;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 0.75rem;
+    margin: 0.88rem 0 1rem 0;
 }
 
 .incident-info-modal-meta-item {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    padding: 10px 12px;
-    border-radius: 10px;
+    gap: 0.25rem;
+    padding: 0.63rem 0.75rem;
+    border-radius: 0.63rem;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .incident-info-modal-meta-item .meta-value {
     color: #f8fafc;
-    font-size: 13px;
+    font-size: clamp(0.69rem, 0.63rem + 0.2vw, 0.82rem);
     line-height: 1.5;
 }
 
 .incident-info-modal-description {
-    font-size: 15px;
+    font-size: clamp(0.8rem, 0.74rem + 0.25vw, 0.94rem);
     line-height: 1.7;
-    margin: 8px 0 0 0;
+    margin: 0.5rem 0 0 0;
     color: #cbd5e1; /* Slightly muted text for better readability */
 }
