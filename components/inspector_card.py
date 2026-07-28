@@ -63,7 +63,7 @@ def render_inspector_card_default():
                         "Officially, the dataset claims to cover incidents from Jan 1, 2000 to Dec 31, 2024, but I also found incidents from 2025, which is why the title mentions 2000 - 2025."
                     ),
                     html.P(
-                        "Click on a country to inspect the arcs of incidents and view country specific information. Use the toggle button to switch between attacker and receiver perspectives."
+                        "Click on a country to inspect the arcs of incidents and view country specific information. Use the toggle button to switch between attacker and receiver perspectives. Click the arcs to view detailed information about individual incidents.",
                     ),
                     html.H3(
                         "Methodology",

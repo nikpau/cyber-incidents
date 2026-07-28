@@ -31,3 +31,35 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
         }
     }
 });
+
+function attachIncidentModalBackdropHandler() {
+    const overlay = document.querySelector('.incident-info-modal-overlay');
+    if (!overlay || overlay.dataset.backdropHandlerAttached === 'true') {
+        return;
+    }
+
+    overlay.dataset.backdropHandlerAttached = 'true';
+    overlay.addEventListener('click', function (event) {
+        if (event.target !== overlay) {
+            return;
+        }
+
+        if (window.dash_clientside && window.dash_clientside.set_props) {
+            window.dash_clientside.set_props('large-incident-modal', {
+                children: [],
+                style: { display: 'none' },
+            });
+        }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attachIncidentModalBackdropHandler);
+} else {
+    attachIncidentModalBackdropHandler();
+}
+
+const modalObserver = new MutationObserver(function () {
+    attachIncidentModalBackdropHandler();
+});
+modalObserver.observe(document.body, { childList: true, subtree: true });

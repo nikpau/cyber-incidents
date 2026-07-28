@@ -124,6 +124,12 @@ def render_app_default_layout(APP_CACHE: dict) -> html.Div:
                         ],
                     ),
                     render_inspector_card_default(),
+                    html.Div(
+                        id="large-incident-modal",
+                        className="incident-info-modal-shell",
+                        style={"display": "none"},
+                        children=[],
+                    ),
                 ],
             ),
             html.Div(
