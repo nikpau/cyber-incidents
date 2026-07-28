@@ -104,6 +104,28 @@ class GeoJsonKeys(StrEnum):
     ADMIN = "admin"
     SOVEREIGNT = "sovereignt"
     FORMAL_EN = "formal_en"
+    
+class AppCacheKeys(StrEnum):
+    """
+    Keys used in the APP_CACHE dictionary for storing precomputed data.
+    """
+    DEFAULT = "DEFAULT"
+    BASE_GEOJSON_DICT = "base_geojson_dict"
+    NAME = "name"
+    SVG = "svg"
+    MAX_INCIDENT_COUNT = "max_incident_count"
+    INSPECTOR_CARD_CONTENT = "inspector_card_content"
+    ARC_DATA = "arc_data"
+    
+class ArcInfoCols(StrEnum):
+    """
+    Columns used in the arc data for visualizing attack flows on the map.
+    """
+    ORIGIN_LAT = "origin_lat"
+    ORIGIN_LON = "origin_lon"
+    DEST_LAT = "dest_lat"
+    DEST_LON = "dest_lon"
+    NAME = "name"
 
 with open(COUNTRIES_FILE, "r") as f:
     COUNTRIES_JSON = json.loads(fix_antimeridian_tearing(gpd.read_file(f)).to_json())

@@ -71,6 +71,7 @@ from data_helpers.db import (
     get_incident_info_by_country,
     get_incidents_by_country,
 )
+from static import AppCacheKeys, ArcInfoCols, GeoJsonKeys, IncidentType
 
 
 def precompute_app_cache(
@@ -161,18 +162,18 @@ def precompute_app_cache(
 
     Returns:
         dict[str, dict[str, dict]]: Nested dictionary structure:
-            - Level 1 keys: "attacker", "receiver" (incident perspectives)
+            - Level 1 keys: IncidentType.ATTACKER, IncidentType.RECEIVER (incident perspectives)
             - Level 2 keys: "DEFAULT" (global view) or ISO Alpha-2 country codes
             - Level 3: Country/view-specific data (described above)
 
             Example return structure:
             {
-                "attacker": {
+                IncidentType.ATTACKER: {
                     "DEFAULT": {...},
                     "US": {...},
                     "CN": {...}
                 },
-                "receiver": {
+                IncidentType.RECEIVER: {
                     "DEFAULT": {...},
                     "US": {...},
                     "CN": {...}
@@ -208,17 +209,17 @@ def precompute_app_cache(
     Example Usage:
         >>> from static import COUNTRIES_JSON, DYADIC_DATABASE
         >>> cache = precompute_app_cache(COUNTRIES_JSON, DYADIC_DATABASE)
-        >>> attack_source_countries = cache["attacker"].keys()
-        >>> us_attacker_data = cache["attacker"]["US"]
-        >>> global_max_incidents = cache["attacker"]["DEFAULT"]["max_incident_count"]
+        >>> attack_source_countries = cache[IncidentType.ATTACKER].keys()
+        >>> us_attacker_data = cache[IncidentType.ATTACKER]["US"]
+        >>> global_max_incidents = cache[IncidentType.ATTACKER]["DEFAULT"]["max_incident_count"]
     """
 
     # Initialize the two-level cache structure
     # Top level: "attacker" and "receiver" perspectives (the two ways to view the data)
     # Second level: "DEFAULT" (global view) and ISO Alpha-2 codes (country-specific views)
     APP_CACHE: dict[str, dict[str, dict]] = {
-        "attacker": {},
-        "receiver": {},
+        IncidentType.ATTACKER: {},
+        IncidentType.RECEIVER: {},
     }
 
     print("⏳ Pre-computing country cache... This will take a few seconds.")
@@ -230,7 +231,7 @@ def precompute_app_cache(
 
     # Main loop: Process each perspective separately
     # This allows us to cache both "who attacked whom" and "who attacked us" views
-    for incident_type in ["attacker", "receiver"]:
+    for incident_type in [IncidentType.ATTACKER, IncidentType.RECEIVER]:
         # ============================================================================
         # PHASE 1: Cache the Global Base Map View
         # ============================================================================
@@ -239,19 +240,21 @@ def precompute_app_cache(
         base_geojson = get_incidents_by_country(
             countries_json, dyadic_database, incident_type
         )
-        
+
         # Convert GeoDataFrame to GeoJSON dict for safe JSON serialization
         # This ensures all data types are JSON-compatible (no numpy types, etc.)
         safe_base_geojson = json.loads(base_geojson.to_json())
-        
+
         # Store the base map data with metadata about this perspective
         # max_incident_count is used for colorbar scaling (square-root transformation)
         APP_CACHE[incident_type]["DEFAULT"] = {
-            "base_geojson_dict": safe_base_geojson,  # GeoJSON for all countries
-            "inspector_card_content": "",             # Empty for default (no country selected)
-            "name": "Cybercrime Incident Inspector",  # UI label for the app
-            "svg": "/assets/eurepoc_logo.svg",        # Application logo SVG
-            "max_incident_count": int(base_geojson["incident_count"].max()),  # For colorbar
+            AppCacheKeys.BASE_GEOJSON_DICT: safe_base_geojson,  # GeoJSON for all countries
+            AppCacheKeys.INSPECTOR_CARD_CONTENT: "",  # Empty for default (no country selected)
+            AppCacheKeys.NAME: "Cybercrime Incident Inspector",  # UI label for the app
+            AppCacheKeys.SVG: "/assets/eurepoc_logo.svg",  # Application logo SVG
+            AppCacheKeys.MAX_INCIDENT_COUNT: int(
+                base_geojson["incident_count"].max()
+            ),  # For colorbar
         }
 
         # ============================================================================
@@ -267,10 +270,10 @@ def precompute_app_cache(
         ):
             # Extract the ISO Alpha-2 country code from the GeoDataFrame row
             # This is a two-letter code like "US", "CN", "RU", etc.
-            # Using the "eh" variant of ISO codes to handle disputed/overseas 
+            # Using the "eh" variant of ISO codes to handle disputed/overseas
             # territories consistently.
-            iso = row.get("iso_a2_eh")  # ISO alpha-2 code
-            
+            iso = row.get(GeoJsonKeys.ISO_A2_EH)  # ISO alpha-2 code
+
             # Skip countries with invalid or missing ISO codes
             # "-99" is a common placeholder for disputed/invalid territories
             if not iso or iso == "-99":  # Skip invalid or missing ISOs
@@ -278,14 +281,18 @@ def precompute_app_cache(
 
             # Extract the country name from the GeoDataFrame
             # Try primary name field first, fall back to admin field, then "Unknown"
-            country_name = row.get("name") or row.get("admin") or "Unknown Country"
+            country_name = (
+                row.get(GeoJsonKeys.NAME)
+                or row.get(GeoJsonKeys.ADMIN)
+                or "Unknown Country"
+            )
 
             # ========================================================================
             # Step 1: Generate SVG Data URI for Country Shape
             # ========================================================================
             # SVG data URI: embeds the SVG image directly in the card without network request
             # Default to app logo if geometry is invalid or empty
-            geom = row.get("geometry")
+            geom = row.get(GeoJsonKeys.GEOMETRY)
             svg_uri = "/assets/eurepoc_logo.svg"  # Default fallback
             if geom and not geom.is_empty:
                 # Generate SVG by converting the country's geographic shape to SVG path
@@ -316,30 +323,30 @@ def precompute_app_cache(
                 arc_data = []
             else:
                 # Convert the incident data to a DataFrame for easier manipulation
-                safe_arcs = pd.DataFrame(single_country_info)
+                single_country_info = pd.DataFrame(single_country_info)
 
                 # Select only the columns needed for arc visualization:
                 # - origin_lat/origin_lon: Starting point of attack flow
                 # - dest_lat/dest_lon: Ending point of attack flow
                 # - name: Incident/campaign name for tooltips
-                safe_arcs = safe_arcs[
+                arc_info = single_country_info[
                     [
-                        "origin_lat",
-                        "origin_lon",
-                        "dest_lat",
-                        "dest_lon",
-                        "name",
+                        ArcInfoCols.ORIGIN_LAT,
+                        ArcInfoCols.ORIGIN_LON,
+                        ArcInfoCols.DEST_LAT,
+                        ArcInfoCols.DEST_LON,
+                        ArcInfoCols.NAME,
                     ]
                 ]
 
                 # Sanitize the DataFrame by converting any NaN/NA values to None
                 # This is critical for JSON serialization (NaN/NA are not JSON-compatible)
                 # Python None becomes JSON null, which is safe and expected
-                safe_arcs = safe_arcs.replace({np.nan: None, pd.NA: None})
-                
+                arc_info = arc_info.replace({np.nan: None, pd.NA: None})
+
                 # Convert the sanitized DataFrame to a list of dictionaries
                 # Each dict represents one attack arc with lat/lon coordinates
-                arc_data = safe_arcs.to_dict(orient="records")
+                arc_data = arc_info.to_dict(orient="records")
 
             # ========================================================================
             # Step 4: Generate Inspector Card Content (Summary Statistics)
@@ -357,10 +364,10 @@ def precompute_app_cache(
             # Save the complete set of pre-computed data for this country and perspective
             # This data will be retrieved instantly when the user clicks on this country
             APP_CACHE[incident_type][iso] = {
-                "name": country_name,                    # Human-readable country name
-                "svg": svg_uri,                          # SVG of country shape
-                "arc_data": arc_data,                    # Attack flow visualization data
-                "inspector_card_content": inspector_card_content,  # Summary HTML content
+                AppCacheKeys.NAME: country_name,  # Human-readable country name
+                AppCacheKeys.SVG: svg_uri,  # SVG of country shape
+                AppCacheKeys.ARC_DATA: arc_data,  # Attack flow visualization data
+                AppCacheKeys.INSPECTOR_CARD_CONTENT: inspector_card_content,  # Summary HTML content
             }
 
     # ============================================================================
@@ -375,7 +382,7 @@ def precompute_app_cache(
     with open("app_cache.json", "w") as f:
         json.dump(APP_CACHE, f, indent=2)
     print("✅ Pre-computing country cache complete.Cache saved to app_cache.json.")
-    
+
     # Return the complete cache dictionary for use by the Dash application
     return APP_CACHE
 
