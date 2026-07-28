@@ -1,0 +1,196 @@
+.floating-inspector-card {
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    right: 0px;
+    z-index: 10;
+    width: 450px;
+    padding-bottom: 24px;
+    overflow-y: auto;
+    background-color: #061527e0;
+    backdrop-filter: blur(12px);
+    border-left: 1px solid rgba(14, 165, 233, 0.3); /* Subtle edge highlight */
+    padding: 24px;
+    box-sizing: border-box;
+    color: #f8fafc;
+    font-family: "Oxanium", sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 16px; /* consistent spacing between main sections */
+}
+
+/* Centered title with a subtle gradient effect */
+.inspector-card-title {
+    font-size: 36px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    color: #f1f5f9;
+    letter-spacing: 0.5px;
+    text-align: center;
+}
+
+.inspector-card-content-highlight {
+    font-size: 32px;
+    font-weight: 600;
+    margin: 4px 0 0 0;
+    text-align: center;
+}
+
+.inspector-inline-link {
+    color: inherit;
+    text-decoration: underline;
+    transition: color 0.2s ease;
+}
+
+/* Custom Scrollbar for the dark theme */
+.floating-inspector-card::-webkit-scrollbar {
+    width: 6px;
+}
+.floating-inspector-card::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+}
+.floating-inspector-card::-webkit-scrollbar-thumb {
+    background: rgba(14, 165, 233, 0.5);
+    border-radius: 4px;
+}
+
+/* --- HEADER / RANK SECTION --- */
+.inspector-card-rank-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.inspector-card-rank-number {
+    font-size: 64px;
+    font-weight: 700;
+    margin: 0;
+    background: linear-gradient(180deg, #f8fafc 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.inspector-card-rank-display {
+    display: flex;
+    flex-direction: row;
+    align-items: end;
+    gap: 4px; /* Space between rank number and subtext */
+}
+
+.inspector-card-rank-subtext {
+    font-size: 18px;
+    color: #94a3b8;
+    margin: 0;
+    padding: 0 0 15px 0; /* Padding to align with the rank number */
+}
+
+/* --- INCIDENT SUB-CARDS --- */
+.inspector-card-incident-info {
+    background: rgba(255, 255, 255, 0.03); /* Slight glass effect */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: background 0.2s ease;
+}
+
+.inspector-card-incident-info:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+/* Contextual left-borders based on threat type */
+.incident-card-attacker {
+    border-left: 3px solid #ef4444; /* Cyber Red */
+}
+.incident-card-receiver {
+    border-left: 3px solid #0ea5e9; /* Cyber Cyan */
+}
+
+.inspector-card-incident-name {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    color: #f1f5f9;
+    letter-spacing: 0.5px;
+}
+
+/* --- METADATA GRID --- */
+.incident-meta-grid {
+    display: grid;
+    grid-template-columns: 16ch auto; /* Two columns */
+    gap: 12px 8px;
+    margin-bottom: 16px;
+}
+
+.meta-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.meta-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #64748b; /* Muted slate */
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+}
+
+.meta-value {
+    font-size: 14px;
+    color: #cbd5e1;
+    text-overflow: ellipsis;
+}
+
+/* --- DESCRIPTION --- */
+.incident-description-container {
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+    padding-top: 12px;
+}
+
+.inspector-card-incident-description {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #94a3b8;
+    margin: 4px 0 0 0;
+    text-align: left;
+}
+
+
+.inspector-card-threat-bar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.inspector-card-threat-bar-name {
+    margin-top: 4px;
+    font-size: 14px;
+    color: #f1f5f9;
+}
+
+.inspector-card-threat-bar-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    font-size: 12px;
+}
+
+.inspector-logo {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    max-height: 240px;
+    object-fit: contain;
+    height: auto;
+    margin: 0 0 6px 0;
+}
+
+.inspector-card-country-subheading {
+    text-align: right;
+    margin: 0;
+    padding: 0;
+}

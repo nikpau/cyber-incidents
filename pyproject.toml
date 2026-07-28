@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cyber-incidents"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "dash>=4.4.0",
+    "dash-deck>=0.0.1",
+    "duckdb>=1.5.4",
+    "geopandas>=1.1.4",
+    "matplotlib>=3.11.1",
+    "pandas>=3.0.3",
+    "pydeck>=0.9.3",
+    "tqdm>=4.69.0",
+]
+
+[project.scripts]
+cyber-incidents = "app:main"
+
+[tool.setuptools]
+py-modules = ["app", "cache", "static"]
+
+[tool.setuptools.packages.find]
+include = ["callbacks*", "components*", "data_helpers*"]
+exclude = ["data", "assets"]
