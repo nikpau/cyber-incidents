@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cyber-incidents"
-version = "0.1.0"
-description = "Add your description here"
+version = "1.0.0"
+description = "Interactive geospatial dashboard for exploring transnational cyber incidents from the EuRepoC dataset"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
