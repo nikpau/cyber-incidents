@@ -11,6 +11,7 @@ from dash import (
     dcc,
     html,
 )
+from flask import Flask
 
 from cache import COUNTRIES_JSON, DYADIC_DATABASE_FILE, precompute_app_cache
 from callbacks.map_click import register_map_click_callback
@@ -204,41 +205,41 @@ def init_app(debug: bool = False) -> Dash | None:
     return app
 
 
-if __name__ == "__main__":
-    def main() -> None:
-        parser = argparse.ArgumentParser(description="Run the Cyber Incidents Dash app.")
-        parser.add_argument(
-            "--host", type=str, default="127.0.0.1", help="Host address to run the app on."
-        )
-        parser.add_argument(
-            "--port", type=int, default=8050, help="Port number to run the app on."
-        )
-        parser.add_argument(
-            "--build-cache", action="store_true", help="Precompute the app cache."
-        )
-        parser.add_argument(
-            "--debug", action="store_true", help="Run the app in debug mode."
-        )
-        args = parser.parse_args()
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Run the Cyber Incidents Dash app.")
+    parser.add_argument(
+        "--host", type=str, default="127.0.0.1", help="Host address to run the app on."
+    )
+    parser.add_argument(
+        "--port", type=int, default=8050, help="Port number to run the app on."
+    )
+    parser.add_argument(
+        "--build-cache", action="store_true", help="Precompute the app cache."
+    )
+    parser.add_argument(
+        "--debug", action="store_true", help="Run the app in debug mode."
+    )
+    args = parser.parse_args()
 
-        if not Path("app_cache.json").exists() and not args.build_cache and args.debug:
-            print(
-                "⚠️ Warning: app_cache.json not found. "
-                "Run with --build-cache to precompute the cache."
-            )
-            sys.exit(1)
-        if args.build_cache:
-            from cache import precompute_app_cache
+    if not Path("app_cache.json").exists() and not args.build_cache and args.debug:
+        print(
+            "⚠️ Warning: app_cache.json not found. "
+            "Run with --build-cache to precompute the cache."
+        )
+        sys.exit(1)
+    if args.build_cache:
+        from cache import precompute_app_cache
 
-            precompute_app_cache(
-                countries_json=COUNTRIES_JSON, 
-                dyadic_database_file=DYADIC_DATABASE_FILE, 
-                debug=True
-            )
-            sys.exit(0)
-        init_app().run(host=args.host, port=args.port, debug=args.debug)
+        precompute_app_cache(
+            countries_json=COUNTRIES_JSON, 
+            dyadic_database_file=DYADIC_DATABASE_FILE, 
+            debug=True
+        )
+        sys.exit(0)
+    init_app().run(host=args.host, port=args.port, debug=args.debug)
 
-else:
-    # Minmal setup for running the app with gunicorn or other WSGI servers
-    app = init_app()
-    server = app.server
+# Minmal setup for running the app with gunicorn or other WSGI servers
+def init_server() -> Flask:
+    """Initializes the Dash app for WSGI servers."""
+    return init_app().server
+    
