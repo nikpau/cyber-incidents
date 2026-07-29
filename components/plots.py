@@ -32,6 +32,7 @@ def plot_incidents_per_year(
     fig = px.line(
         x=years,
         y=counts,
+        markers=True,
         labels={"x": "Year", "y": "Number of Incidents"},
         title=title,
     )
@@ -41,7 +42,8 @@ def plot_incidents_per_year(
     fig.update_traces(
         line=dict(color=accent_color, width=3),
         marker=dict(color=accent_color, size=7),
-        hovertemplate="<b>%{x}</b><br>%{y} incidents<extra></extra>",
+        hovertemplate=
+        "%{y} attacks(s)<extra></extra>",
     )
 
     fig.update_layout(
@@ -65,6 +67,7 @@ def plot_incidents_per_year(
             title_font=dict(size=12, color="#f8fafc"),
         ),
         hovermode="x unified",
+        hoverlabel=dict(bgcolor="#061527", font=dict(color="#f8fafc"))
     )
 
     return fig
