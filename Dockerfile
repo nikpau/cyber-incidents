@@ -27,5 +27,4 @@ RUN pip install --no-cache-dir .
 EXPOSE 8050
 
 # Run FastAPI on port 8050.
-CMD ["gunicorn", "'app:init_server()'", "--workers", "2", "--preload", "--bind", "0.0.0.0:8050"]
-    
+CMD ["gunicorn", "app:init_server()", "--workers", "2", "--preload", "--bind", "0.0.0.0:8050"]
