@@ -9,22 +9,20 @@ the "attacker perspective" (viewing from the perspective of attack sources) and 
 
 The module registers Dash callbacks that:
 1. Toggle between incident perspectives when the user clicks the perspective button
-2. Extract geographical location data from map click events
+2. Read the currently selected country from the shared state store
 3. Update the map visualization, colorbar scaling, and inspector card content
 4. Maintain consistent styling and UI state across view changes
 
 Key Concepts:
 - Incident Type: An enum (ATTACKER or RECEIVER) determining which perspective is active
-- ISO Alpha-2 Code: Two-letter country code (e.g., 'US', 'CN') extracted from GeoJSON features
 - Arc Data: Flow visualization data showing attack origins/destinations between countries
-- Colorbar Scale: Logarithmic-style scaling that applies a square root transformation to
-  incident counts for better visual representation of attack frequency ranges
+- Colorbar Scale: A square-root-based scaling applied to incident counts for better
+  visual representation of attack frequency ranges
 
 Dependencies:
 - Dash: For callback registration and reactive updates
-- static.APP_CACHE: Pre-computed data structures containing GeoJSON maps, arc data,
-  and inspector card content for all country/perspective combinations
-- components: Rendering functions for map visualization and inspector cards
+- cache: The AppCache instance passed into the callback registration function
+- components: Rendering functions for the map visualization and inspector cards
 """
 
 from dash import Dash, Input, Output, State, no_update
@@ -33,10 +31,11 @@ from components.inspector_card import (
     render_inspector_card_content,
 )
 from components.map import get_map_json_fast
-from static import APP_CACHE, IncidentType
+from data_helpers.schema import AppCache, IncidentType
 
 
-def register_map_toggle_callbacks(
+def register_perspective_toggle_callbacks(
+    cache: AppCache,
     app: Dash,
 ) -> None:
     """
@@ -117,7 +116,7 @@ def register_map_toggle_callbacks(
         6. **Data Rendering**: Retrieves pre-computed visualization data from APP_CACHE and
            renders appropriate map geojson and flow arcs
 
-        7. **Country-Specific Updates**: If a country is selected (clickInfo is not None),
+        7. **Country-Specific Updates**: If a country is selected in the shared state store,
            updates the inspector card to show detailed information about that country's
            incident statistics for the active perspective
 
@@ -128,13 +127,15 @@ def register_map_toggle_callbacks(
         - incident-colorbar-context: Text label ("Attacker perspective" or "Receiver perspective")
         - incident-colorbar-mid: Midpoint value for color gradient (string, square-root scaled)
         - incident-colorbar-max: Maximum value for color gradient (string, square-root scaled)
+        - inspector-card-title: Title text for the inspector card
+        - inspector-card-image: Flag or emblem image for the active country
         - inspector-card-content: Rendered HTML content showing country-specific incident data
 
         Callback Inputs:
         - toggle-incident-type n_clicks: Click counter on the toggle button (even/odd determines view)
 
         Callback State:
-        - map-canvas clickInfo: Information about the last clicked country (if any)
+        - selected-country-store data: The currently selected country code from the dashboard state
 
         Args:
             n_clicks (int): Click count on the perspective toggle button. Used to determine
@@ -142,27 +143,27 @@ def register_map_toggle_callbacks(
                            - 0, 2, 4, ... (even): Attacker perspective (asking "who attacked whom?")
                            - 1, 3, 5, ... (odd): Receiver perspective (asking "who attacked us?")
 
-            clickInfo (dict | None): Information about the currently selected country from
-                                    the map click event. Contains:
-                                    - object: Dictionary with 'iso_a2_eh' or
-                                      nested 'properties.iso_a2_eh' containing the country code
-                                    - None if no country is currently selected
+            selected_country (str | None): The currently selected country code from the
+                                           shared dashboard state. If empty or not present
+                                           in the cache for the active perspective, the callback
+                                           falls back to the default global view.
 
         Returns:
-            tuple: Seven-element tuple containing:
+            tuple: Nine-element tuple containing:
                 - dict: Base map GeoJSON (output to "base-map-store")
                 - list: Arc data for flow visualization (output to "arc-data-store")
                 - str: CSS class name for toggle button (output to "toggle-incident-type" className)
                 - str: Context label for colorbar (output to "incident-colorbar-context")
                 - str: Midpoint value for colorbar (output to "incident-colorbar-mid")
                 - str: Maximum value for colorbar (output to "incident-colorbar-max")
-                - Component | no_update: Rendered inspector card or no_update
+                - str: Inspector card title text
+                - str: Inspector card image source
+                - Component | no_update: Rendered inspector card content or no_update
                   (output to "inspector-card-content")
 
         Raises:
-            KeyError: If APP_CACHE structure is missing expected data for the perspective
-                     or country combination
-            AttributeError: If click_info structure doesn't match expected format
+            KeyError: If the cache structure is missing expected data for the selected
+                      perspective or country combination.
 
         Side Effects:
             - Triggers updates to multiple dashboard UI components through Dash callback chain
@@ -188,7 +189,7 @@ def register_map_toggle_callbacks(
 
         # Retrieve the maximum incident count for this perspective from the cache
         # This value represents the highest number of incidents in any country for this view
-        max_count = APP_CACHE[incident_type]["DEFAULT"]["max_incident_count"]
+        max_count = cache[incident_type]["DEFAULT"]["max_incident_count"]
         mid_count = max_count // 2
 
         # Set CSS classes to style the toggle button based on the active perspective
@@ -217,7 +218,7 @@ def register_map_toggle_callbacks(
         max_count = str(int(max_count))
 
         # Handle the case where no country is currently selected on the map
-        if not selected_country or selected_country not in APP_CACHE[incident_type]:
+        if not selected_country or selected_country not in cache[incident_type]:
             default_inspector_children = no_update
             # No country selected, render the default global map view
             # Return data for all countries with no specific country highlighted
@@ -227,7 +228,7 @@ def register_map_toggle_callbacks(
             return (
                 # GeoJSON base map data (retrieved from cache and formatted for visualization)
                 get_map_json_fast(
-                    base_geojson=APP_CACHE[incident_type]["DEFAULT"][
+                    base_geojson=cache[incident_type]["DEFAULT"][
                         "base_geojson_dict"
                     ],
                 ),
@@ -242,9 +243,9 @@ def register_map_toggle_callbacks(
                 # Scaled maximum value
                 max_count,
                 # Default inspector title
-                APP_CACHE[incident_type]["DEFAULT"]["name"],
+                cache[incident_type]["DEFAULT"]["name"],
                 # Default inspector image
-                APP_CACHE[incident_type]["DEFAULT"]["svg"],
+                cache[incident_type]["DEFAULT"]["svg"],
                 # Default inspector body content
                 default_inspector_children[2].children,
             )
@@ -253,7 +254,7 @@ def register_map_toggle_callbacks(
         # and perspective combination from the cache
         # The cache contains summary statistics, incident lists, and formatted
         # information about attacks involving this country
-        inspector_card_content = APP_CACHE[incident_type][selected_country][
+        inspector_card_content = cache[incident_type][selected_country][
             "inspector_card_content"
         ]
 
@@ -261,12 +262,12 @@ def register_map_toggle_callbacks(
         return (
             # GeoJSON base map data with this country potentially highlighted
             get_map_json_fast(
-                base_geojson=APP_CACHE[incident_type]["DEFAULT"]["base_geojson_dict"],
+                base_geojson=cache[incident_type]["DEFAULT"]["base_geojson_dict"],
             ),
             # Arc data showing flow lines from/to the selected country based on perspective
             # For attacker view: arrows showing where this country attacked
             # For receiver view: arrows showing who attacked this country
-            APP_CACHE[incident_type][selected_country]["arc_data"],
+            cache[incident_type][selected_country]["arc_data"],
             # Button styling
             button_class,
             # Perspective label
@@ -276,9 +277,9 @@ def register_map_toggle_callbacks(
             # Scaled maximum value
             max_count,
             # Country name for selected country
-            APP_CACHE[incident_type][selected_country]["name"],
+            cache[incident_type][selected_country]["name"],
             # Country image for selected country
-            APP_CACHE[incident_type][selected_country]["svg"],
+            cache[incident_type][selected_country]["svg"],
             # Render the inspector card with country-specific incident data
             render_inspector_card_content(inspector_card_content),
         )

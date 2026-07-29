@@ -12,17 +12,18 @@ from dash import (
     html,
 )
 
-import static
+from cache import COUNTRIES_JSON, DYADIC_DATABASE_FILE, precompute_app_cache
 from callbacks.map_click import register_map_click_callback
 from callbacks.map_reset import register_map_reset_callback
-from callbacks.map_toggle import register_map_toggle_callbacks
+from callbacks.map_toggle import register_perspective_toggle_callbacks
 from components.inspector_card import render_inspector_card_default
 from components.map import get_colorbar_ticks, get_map_json_fast, render_map_canvas
-from data_helpers.db import (
-    DYADIC_DATABASE,
-    get_colorbar_gradient_css,
+from data_helpers.db import get_colorbar_gradient_css
+from data_helpers.schema import IncidentType
+
+OXANIUM_FONT_URL = (
+    "https://fonts.googleapis.com/css2?family=Oxanium:wght@200..800&display=swap"
 )
-from static import IncidentType
 
 
 def render_app_default_layout(APP_CACHE: dict) -> html.Div:
@@ -111,7 +112,7 @@ def render_app_default_layout(APP_CACHE: dict) -> html.Div:
                                 className="incident-colorbar-track",
                                 style={"background": get_colorbar_gradient_css()},
                             ),
-                            get_colorbar_ticks("attacker"),
+                            get_colorbar_ticks(APP_CACHE,"attacker"),
                         ],
                     ),
                     # Affiliation notice
@@ -157,26 +158,41 @@ def render_app_default_layout(APP_CACHE: dict) -> html.Div:
     )
 
 
-def init_app() -> Dash:
+def init_app(debug: bool = False) -> Dash | None:
     """Initializes the Dash app and returns the app instance."""
-    APP_CACHE: dict[str, dict[str, dict]] = static.APP_CACHE
+
+    if debug:
+        if not Path("app_cache.json").exists():
+            print(
+                "⚠️ Warning: app_cache.json not found. "
+                "Building the cache for debugging purposes. This may take a few minutes..."
+            )
+            APP_CACHE = precompute_app_cache(
+                countries_json=COUNTRIES_JSON,
+                dyadic_database_file=DYADIC_DATABASE_FILE,
+                debug=True,
+            )
+    else:
+        APP_CACHE = precompute_app_cache(
+            countries_json=COUNTRIES_JSON,
+            dyadic_database_file=DYADIC_DATABASE_FILE,
+            debug=False,
+        )
 
     # Init app
     app = Dash(
         name="Global Cyber Incidents",
         suppress_callback_exceptions=True,
-        external_stylesheets=[static.OXANIUM_FONT_URL],
+        external_stylesheets=[OXANIUM_FONT_URL],
         title="Global Cyber Incidents",
     )
 
     app.layout = render_app_default_layout(APP_CACHE=APP_CACHE)
-    register_map_toggle_callbacks(app=app)
-    register_map_click_callback(
-        app=app,
-        countries_json=static.COUNTRIES_JSON,
-    )
-    register_map_reset_callback(app=app)
 
+    # Callbacks
+    register_perspective_toggle_callbacks(app=app, cache=APP_CACHE)
+    register_map_click_callback(app=app, cache=APP_CACHE)
+    register_map_reset_callback(app=app, cache=APP_CACHE)
     clientside_callback(
         ClientsideFunction(namespace="clientside", function_name="update_map_canvas"),
         Output("map-canvas", "data", allow_duplicate=True),

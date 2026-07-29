@@ -5,7 +5,7 @@ import geopandas as gpd
 import matplotlib.colors as mcolors
 import pandas as pd
 
-from static import (
+from data_helpers.schema import (
     COLORBAR_SCALE_FACTOR,
     DyadicCols,
     GeoJsonKeys,
@@ -13,18 +13,12 @@ from static import (
 )
 
 # Single source of truth for map and colorbar palette.
-# COLORMAP_HEX_STOPS = ["#386641", "#6a994e", "#f2e8cf", "#7c2729", "#920000"]
 COLORMAP_HEX_STOPS = ["#335c67", "#fff3b0", "#e09f3e", "#9e2a2b", "#540b0e"]
-# COLORMAP_HEX_STOPS = ["#386641", "#6a994e", "#f2e8cf", "#7c2729", "#920000"]
-# COLORMAP_HEX_STOPS = ["#386641", "#6a994e", "#f2e8cf", "#7c2729", "#920000"]
+
 COLORMAP = mcolors.LinearSegmentedColormap.from_list(
     "cyber_incidents_copper",
     COLORMAP_HEX_STOPS,
 )
-
-# DB connection in read-only mode to prevent concurrency errors when
-# multiple worker processes access the app simultaneously.
-DYADIC_DATABASE = duckdb.connect(database="incidents.duckdb", read_only=True)
 
 
 def get_colorbar_gradient_css() -> str:
@@ -262,11 +256,6 @@ def get_attacker_and_receiver_rankings(
     )
 
     return attacker_rankings, receiver_rankings
-
-
-ATTACKER_RANKING, RECEIVER_RANKING = get_attacker_and_receiver_rankings(
-    dyadic_database=DYADIC_DATABASE
-)
 
 
 def get_color_map(count: int, max_count: int) -> list:

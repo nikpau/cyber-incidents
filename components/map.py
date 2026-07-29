@@ -16,8 +16,8 @@ from dash import html
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import transform
 
-import static
-from static import APP_CACHE, GeoJsonKeys, IncidentType
+from data_helpers import schema
+from data_helpers.schema import AppCache, GeoJsonKeys, IncidentType
 
 
 def get_map_json_fast(
@@ -260,10 +260,21 @@ def build_country_shape_svg_data_uri(iso_alpha_2: str, geometry: BaseGeometry) -
     return f"data:image/svg+xml;charset=utf-8,{quote(svg)}"
 
 
-def get_colorbar_ticks(incident_type: IncidentType) -> html.Div:
-    """Return colorbar ticks for the current perspective using configured scale factor."""
-    max_count = APP_CACHE[incident_type]["DEFAULT"]["max_incident_count"]
-    mid_count = int((max_count // 2) ** (static.COLORBAR_SCALE_FACTOR))
+def get_colorbar_ticks(
+    cache: AppCache,
+    incident_type: IncidentType,
+) -> html.Div:
+    """
+    Return colorbar ticks for the current perspective using configured scale factor.
+    
+    Args:
+        cache (dict): The precomputed cache containing incident data.
+        incident_type (IncidentType): The type of incident (attacker or receiver).
+    Returns:
+        html.Div: A Dash HTML Div containing the colorbar ticks.
+    """
+    max_count = cache[incident_type]["DEFAULT"]["max_incident_count"]
+    mid_count = int((max_count // 2) ** (schema.COLORBAR_SCALE_FACTOR))
     return html.Div(
         className="incident-colorbar-ticks",
         children=[

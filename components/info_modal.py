@@ -3,7 +3,7 @@
 from dash import html
 
 from components.inspector_card import render_threat_bar
-from static import IncidentType
+from data_helpers.schema import IncidentType
 
 
 def render_incident_info_modal(

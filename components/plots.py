@@ -1,6 +1,6 @@
 import plotly.express as px
 
-from static import IncidentType
+from data_helpers.schema import IncidentType
 
 
 def plot_incidents_per_year(

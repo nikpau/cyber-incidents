@@ -1,4 +1,17 @@
-import geopandas as gpd
+"""
+Map Click Callback Module
+=========================
+
+This module handles interactions with the dashboard map, including country selection,
+arc selection, and modal display for incident details. It updates the inspector card,
+selected-country state, and incident modal based on the active perspective.
+
+The callback inspects Dash Deck click information and branches between:
+1. A country click, which highlights that country and shows its incident arcs
+2. An arc click, which opens a modal with details for the selected incident
+3. A missing selection, which restores the default global view
+"""
+
 from dash import Dash, Input, Output, State, no_update
 
 from components.info_modal import render_incident_info_modal
@@ -6,21 +19,25 @@ from components.inspector_card import (
     render_inspector_card_content,
     render_inspector_card_default,
 )
-from components.map import (
-    country_name_for_iso,
-    geometry_for_iso,
-    get_map_json_fast,
-)
-from static import APP_CACHE, ArcInfoCols, GeoJsonKeys, IncidentType
+from components.map import get_map_json_fast
+from data_helpers.schema import AppCache, ArcInfoCols, GeoJsonKeys, IncidentType
 
 
-# Register the callback for handling map clicks by rendering
-# the map canvas with the incident arcs for the selected country.
 def register_map_click_callback(
+    cache: AppCache,
     app: Dash,
-    countries_json: dict,
 ) -> None:
-    countries_gdf = gpd.GeoDataFrame.from_features(countries_json[GeoJsonKeys.FEATURES])
+    """
+    Register the Dash callback that handles map interactions.
+
+    The callback responds to clicks on the map canvas and updates the dashboard state
+    based on whether the user clicked a country, an arc, or nothing at all.
+
+    Args:
+        cache: The application cache containing country and incident data for both
+            attacker and receiver perspectives.
+        app: The Dash application instance used to register the callback.
+    """
 
     @app.callback(
         Output("arc-data-store", "data"),
@@ -36,21 +53,39 @@ def register_map_click_callback(
         prevent_initial_call=True,
     )
     def handle_map_click(clickInfo, n_clicks, selected_country_iso):
+        """
+        Handle map clicks and update the relevant dashboard components.
+
+        The callback determines the active incident perspective from the toggle button
+        click count, inspects the clicked object, and then either:
+        - resets to the default view when no country is selected,
+        - opens a modal for a clicked arc, or
+        - updates the inspector card and arc data for a clicked country.
+
+        Args:
+            clickInfo: Click data emitted by the map canvas.
+            n_clicks: The number of clicks on the perspective toggle button.
+            selected_country_iso: The currently selected country ISO code from shared state.
+
+        Returns:
+            A tuple containing the updated arc data, inspector card values, selected
+            country state, and modal content/style.
+        """
         incident_type = (
             IncidentType.ATTACKER
             if ((n_clicks or 0) % 2 == 0)
             else IncidentType.RECEIVER
         )
 
-        base_map_dict = APP_CACHE[incident_type]["DEFAULT"]["base_geojson_dict"]
+        base_map_dict = cache[incident_type]["DEFAULT"]["base_geojson_dict"]
 
         if clickInfo is None:
             # No country selected, render the default map view.
             default_inspector_children = render_inspector_card_default().children
             return (
                 get_map_json_fast(base_geojson=base_map_dict),
-                APP_CACHE[incident_type]["DEFAULT"]["name"],
-                APP_CACHE[incident_type]["DEFAULT"]["svg"],
+                cache[incident_type]["DEFAULT"]["name"],
+                cache[incident_type]["DEFAULT"]["svg"],
                 default_inspector_children[2].children,
                 None,
                 [],
@@ -83,16 +118,16 @@ def register_map_click_callback(
         if clicked_on_arc:
             selected_incident_name = clicked_object.get("name")
             modal_country_iso = selected_country_iso
-            modal_country_name = APP_CACHE[incident_type]["DEFAULT"]["name"]
-            modal_image_src = APP_CACHE[incident_type]["DEFAULT"]["svg"]
-            modal_inspector_card_content = APP_CACHE[incident_type]["DEFAULT"][
+            modal_country_name = cache[incident_type]["DEFAULT"]["name"]
+            modal_image_src = cache[incident_type]["DEFAULT"]["svg"]
+            modal_inspector_card_content = cache[incident_type]["DEFAULT"][
                 "inspector_card_content"
             ]
 
-            if modal_country_iso and modal_country_iso in APP_CACHE[incident_type]:
-                modal_country_name = APP_CACHE[incident_type][modal_country_iso]["name"]
-                modal_image_src = APP_CACHE[incident_type][modal_country_iso]["svg"]
-                modal_inspector_card_content = APP_CACHE[incident_type][
+            if modal_country_iso and modal_country_iso in cache[incident_type]:
+                modal_country_name = cache[incident_type][modal_country_iso]["name"]
+                modal_image_src = cache[incident_type][modal_country_iso]["svg"]
+                modal_inspector_card_content = cache[incident_type][
                     modal_country_iso
                 ]["inspector_card_content"]
 
@@ -132,29 +167,17 @@ def register_map_click_callback(
                     {"display": "none"},
                 )
 
-            clicked_object_name = clicked_object.get("name")
+            country_name = cache[incident_type][iso_alpha_2]["name"]
 
-            country_name = country_name_for_iso(
-                countries_gdf=countries_gdf,
-                iso_alpha_2=iso_alpha_2,
-                additional_name=clicked_object_name,  # Fallback to GeoJSON name
-            )
-            geometry = geometry_for_iso(
-                countries_gdf=countries_gdf,
-                iso_alpha_2=iso_alpha_2,
-                additional_name=clicked_object_name,  # Fallback to GeoJSON name
-            )
-            image_src = "/assets/eurepoc_logo.svg"
-            if geometry is not None:
-                image_src = APP_CACHE[incident_type][iso_alpha_2]["svg"]
+            image_src = cache[incident_type][iso_alpha_2]["svg"]
 
-            inspector_card_content = APP_CACHE[incident_type][iso_alpha_2][
+            inspector_card_content = cache[incident_type][iso_alpha_2][
                 "inspector_card_content"
             ]
 
             # Render the map canvas with the incident arcs for the selected country.
             return (
-                APP_CACHE[incident_type][iso_alpha_2]["arc_data"],
+                cache[incident_type][iso_alpha_2]["arc_data"],
                 country_name,
                 image_src,
                 render_inspector_card_content(

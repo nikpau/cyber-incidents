@@ -8,13 +8,14 @@ This module separates two concerns:
 import colorsys
 from datetime import datetime
 
+import duckdb
 import matplotlib.colors as mc
 import pandas as pd
 from dash import dcc, html
 
 from components.plots import plot_incidents_per_year
-from data_helpers.db import ATTACKER_RANKING, RECEIVER_RANKING
-from static import DyadicCols, IncidentType
+from data_helpers.db import get_attacker_and_receiver_rankings
+from data_helpers.schema import DyadicCols, IncidentType
 
 
 def render_inspector_card_default():
@@ -80,6 +81,7 @@ def render_inspector_card_default():
 def cache_inspector_card_content(
     single_country_info: pd.DataFrame | None,
     incident_type: IncidentType,
+    dyadic_database: duckdb.DuckDBPyConnection,
 ) -> list[html.Div | html.P | html.A]:
     """Build a cache-friendly payload for one country and one perspective.
 
@@ -98,7 +100,7 @@ def cache_inspector_card_content(
     cache_payload = {}
     cache_payload["incident_type"] = incident_type
 
-    a_ranks, r_ranks = ATTACKER_RANKING, RECEIVER_RANKING
+    a_ranks, r_ranks = get_attacker_and_receiver_rankings(dyadic_database)
 
     a_or_r = "Attacker" if incident_type == IncidentType.ATTACKER else "Receiver"
 
