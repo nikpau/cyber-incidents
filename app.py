@@ -11,46 +11,34 @@ from dash import (
     dcc,
     html,
 )
+from flask import Flask
 
-import static
+from cache import COUNTRIES_JSON, DYADIC_DATABASE_FILE, precompute_app_cache
 from callbacks.map_click import register_map_click_callback
-from callbacks.map_toggle import register_map_toggle_callbacks
+from callbacks.map_reset import register_map_reset_callback
+from callbacks.map_toggle import register_perspective_toggle_callbacks
 from components.inspector_card import render_inspector_card_default
 from components.map import get_colorbar_ticks, get_map_json_fast, render_map_canvas
-from data_helpers.db import (
-    DYADIC_DATABASE,
-    get_colorbar_gradient_css,
+from data_helpers.db import get_colorbar_gradient_css
+from data_helpers.schema import IncidentType
+
+OXANIUM_FONT_URL = (
+    "https://fonts.googleapis.com/css2?family=Oxanium:wght@200..800&display=swap"
 )
 
 
-def init_app() -> Dash:
-    """Initializes the Dash app and returns the app instance."""
-    APP_CACHE: dict[str, dict[str, dict]] = static.APP_CACHE
-
-    # Init app
-    app = Dash(
-        __name__,
-        suppress_callback_exceptions=True,
-        external_stylesheets=[static.OXANIUM_FONT_URL],
-    )
-
-    # Register a function to close the DuckDB connection when the app exits
-    # @atexit.register
-    # def close_duckdb_connection():
-    #     if static.DYADIC_DATABASE is not None:
-    #         static.DYADIC_DATABASE.close()
-    #         print("DuckDB connection closed.")
-
-    app.layout = html.Div(
+def render_app_default_layout(APP_CACHE: dict) -> html.Div:
+    return html.Div(
         className="fullscreen-container",  # Styled via assets/layout.css
         children=[
             dcc.Store(
                 id="base-map-store",
                 data=get_map_json_fast(
-                    APP_CACHE[static.IncidentType.ATTACKER.value]["DEFAULT"]["base_geojson_dict"]
+                    APP_CACHE[IncidentType.ATTACKER]["DEFAULT"]["base_geojson_dict"]
                 ),
             ),
             dcc.Store(id="arc-data-store", data=[]),
+            dcc.Store(id="selected-country-store", data=None),
             html.Div(
                 className="desktop-only-content",
                 children=[
@@ -62,8 +50,19 @@ def init_app() -> Dash:
                     html.Div(
                         className="headline",
                         children=[
+                            html.Button(
+                                id="reset-map-button",
+                                n_clicks=0,
+                                className="floating-reset-button",
+                                children=[
+                                    html.Span(
+                                        "Reset Map",
+                                        className="reset-button-label",
+                                    ),
+                                ],
+                            ),
                             html.H1(
-                                "Global Cyber Incidents [2000 - 2024]",
+                                "Global Cyber Incidents [2000 - 2025]",
                                 className="headline-title",
                             ),
                             html.P(
@@ -106,7 +105,7 @@ def init_app() -> Dash:
                                 "Incident Count", className="incident-colorbar-title"
                             ),
                             html.Div(
-                                "Attacker perspective",
+                                "Cyber attacks carried out",
                                 id="incident-colorbar-context",
                                 className="incident-colorbar-context",
                             ),
@@ -114,7 +113,7 @@ def init_app() -> Dash:
                                 className="incident-colorbar-track",
                                 style={"background": get_colorbar_gradient_css()},
                             ),
-                            get_colorbar_ticks("attacker"),
+                            get_colorbar_ticks(APP_CACHE,"attacker"),
                         ],
                     ),
                     # Affiliation notice
@@ -127,6 +126,12 @@ def init_app() -> Dash:
                         ],
                     ),
                     render_inspector_card_default(),
+                    html.Div(
+                        id="large-incident-modal",
+                        className="incident-info-modal-shell",
+                        style={"display": "none"},
+                        children=[],
+                    ),
                 ],
             ),
             html.Div(
@@ -153,12 +158,42 @@ def init_app() -> Dash:
         ],
     )
 
-    register_map_toggle_callbacks(app=app)
-    register_map_click_callback(
-        app=app,
-        countries_json=static.COUNTRIES_JSON,
+
+def init_app(debug: bool = False) -> Dash | None:
+    """Initializes the Dash app and returns the app instance."""
+
+    if debug:
+        if not Path("app_cache.json").exists():
+            print(
+                "⚠️ Warning: app_cache.json not found. "
+                "Building the cache for debugging purposes. This may take a few minutes..."
+            )
+            APP_CACHE = precompute_app_cache(
+                countries_json=COUNTRIES_JSON,
+                dyadic_database_file=DYADIC_DATABASE_FILE,
+                debug=True,
+            )
+    else:
+        APP_CACHE = precompute_app_cache(
+            countries_json=COUNTRIES_JSON,
+            dyadic_database_file=DYADIC_DATABASE_FILE,
+            debug=False,
+        )
+
+    # Init app
+    app = Dash(
+        name="Global Cyber Incidents",
+        suppress_callback_exceptions=True,
+        external_stylesheets=[OXANIUM_FONT_URL],
+        title="Global Cyber Incidents",
     )
 
+    app.layout = render_app_default_layout(APP_CACHE=APP_CACHE)
+
+    # Callbacks
+    register_perspective_toggle_callbacks(app=app, cache=APP_CACHE)
+    register_map_click_callback(app=app, cache=APP_CACHE)
+    register_map_reset_callback(app=app, cache=APP_CACHE)
     clientside_callback(
         ClientsideFunction(namespace="clientside", function_name="update_map_canvas"),
         Output("map-canvas", "data", allow_duplicate=True),
@@ -181,9 +216,12 @@ def main() -> None:
     parser.add_argument(
         "--build-cache", action="store_true", help="Precompute the app cache."
     )
+    parser.add_argument(
+        "--debug", action="store_true", help="Run the app in debug mode."
+    )
     args = parser.parse_args()
 
-    if not Path("app_cache.json").exists() and not args.build_cache:
+    if not Path("app_cache.json").exists() and not args.build_cache and args.debug:
         print(
             "⚠️ Warning: app_cache.json not found. "
             "Run with --build-cache to precompute the cache."
@@ -193,12 +231,15 @@ def main() -> None:
         from cache import precompute_app_cache
 
         precompute_app_cache(
-            countries_json=static.COUNTRIES_JSON, dyadic_database=DYADIC_DATABASE
+            countries_json=COUNTRIES_JSON, 
+            dyadic_database_file=DYADIC_DATABASE_FILE, 
+            debug=True
         )
         sys.exit(0)
-    init_app().run(host=args.host, port=args.port, debug=True)
+    init_app().run(host=args.host, port=args.port, debug=args.debug)
 
-
-if __name__ == "__main__":
-    init_app().run(debug=True)
-    # main()
+# Minmal setup for running the app with gunicorn or other WSGI servers
+def init_server() -> Flask:
+    """Initializes the Dash app for WSGI servers."""
+    return init_app().server
+    
