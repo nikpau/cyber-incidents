@@ -18,6 +18,8 @@ COPY app.py .
 COPY incidents.duckdb .
 COPY cache.py .
 
+COPY data/map_data/countries.geo.json data/map_data/countries.geo.json
+
 # Install the package and all dependencies declared in pyproject.toml.
 RUN pip install --no-cache-dir .
 
