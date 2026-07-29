@@ -237,6 +237,7 @@ def cache_inspector_card_content(
                     "source_or_target_val": source_or_target_val,
                     "initiator_name": row[DyadicCols.INITIATOR_NAME],
                     "description": row[DyadicCols.DESCRIPTION],
+                    "intensity": row[DyadicCols.UNWEIGHTED_INTENSITY],
                     "accent_color_class": accent_color_class,
                 }
             )
@@ -270,12 +271,17 @@ def render_inspector_card_content(
         f"{cache_data.get('rank_heading')}",
         className="inspector-card-country-subheading",
     )
+    threat_bar_sub_text = (
+        "Threat Level"
+        if cache_data.get("incident_type") == IncidentType.ATTACKER
+        else "Target Importance"
+    )
 
     # 2-column layout with threat bar on the left and rank on the right
     if cache_data.get("incident_infos"):
         # Cube root scaling for better visual distribution
         threat_bar = render_threat_bar(
-            cache_data.get("threat_score"), cache_data.get("incident_type")
+            cache_data.get("threat_score"), threat_bar_sub_text
         )
 
         rank_display = html.Div(
@@ -401,7 +407,7 @@ def render_inspector_card_content(
             "No recorded incidents in the dataset for this country and perspective.",
             className="inspector-card-no-incidents",
         )
-        threat_bar = render_threat_bar(0.0, cache_data.get("incident_type"))
+        threat_bar = render_threat_bar(0.0, threat_bar_sub_text)
         rank_display = html.Div(
             className="inspector-card-rank-display",
             children=[
@@ -434,7 +440,7 @@ def update_incidents_per_year(incidents_per_year: dict[int, int], start_date: st
         # Handle cases where start_date is not in the expected format
         pass
 
-def render_threat_bar(score: float, incident_type: IncidentType) -> html.Div:
+def render_threat_bar(score: float, sub_text: str) -> html.Div:
     """Render a segmented threat/importance bar for a normalized score in [0, 1].
 
     The bar has 8 segments, each representing a threshold at i/8 (0, 0.125, 0.25, ...).
@@ -470,9 +476,7 @@ def render_threat_bar(score: float, incident_type: IncidentType) -> html.Div:
             )
         )
     threat_bar_name = html.Div(
-        "Threat Level"
-        if incident_type == IncidentType.ATTACKER
-        else "Target Importance",
+        sub_text,
         className="inspector-card-threat-bar-name",
     )
     return html.Div(

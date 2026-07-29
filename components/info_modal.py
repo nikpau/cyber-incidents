@@ -27,8 +27,12 @@ def render_incident_info_modal(
 
     rank = inspector_card_content.get("rank", "N/A")
     total_ranks = inspector_card_content.get("total_ranks", "")
-    threat_score = inspector_card_content.get("threat_score", 0.0)
-
+    threat_score = selected_incident_info.get("intensity")
+    
+    # The Impact score indicator lives on a scale from 1 - 10, 
+    # as described in the codebook (p. 12, Nr. 38). We normalize it to a 0 - 1 scale for the threat bar.
+    threat_score = (threat_score - 1) / (10 - 1) ** (3/5)
+    
     incident_name = (
         selected_incident_info.get("incident_name")
         if selected_incident_info is not None
@@ -86,7 +90,7 @@ def render_incident_info_modal(
                                         className="incident-info-modal-rank-pill",
                                         children=[
                                             html.Span(
-                                                "Rank",
+                                                "Country Rank",
                                                 className="meta-label",
                                             ),
                                             html.H1(
@@ -99,7 +103,7 @@ def render_incident_info_modal(
                                         className="incident-info-modal-threat-card",
                                         children=[
                                             render_threat_bar(
-                                                threat_score, incident_type
+                                                threat_score, "Attack Intensity"
                                             ),
                                         ],
                                     ),
