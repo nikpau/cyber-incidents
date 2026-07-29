@@ -16,7 +16,7 @@
 }
 
 :root {
-  --inspector-width: clamp(20rem, 29vw, 28rem);
+  --inspector-width: clamp(30rem, 29vw, 28rem);
   --edge-space: clamp(0.75rem, 1.3vw, 1.5rem);
 }
 
