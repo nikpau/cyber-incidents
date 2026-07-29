@@ -56,7 +56,7 @@
   min-width: clamp(7.8rem, 7.2rem + 0.8vw, 8.6rem);
   height: clamp(2.25rem, 2.1rem + 0.25vw, 2.5rem);
   padding: 0 clamp(0.65rem, 0.55rem + 0.4vw, 0.9rem);
-  border: 1px solid rgba(172, 0, 0, 0.55);
+  border: 1px solid rgba(4, 16, 85, 0.55);
   border-radius: clamp(0.5rem, 0.35rem + 0.35vw, 0.65rem);
   background:
     linear-gradient(120deg, rgba(34, 211, 238, 0.24), rgba(34, 211, 238, 0) 45%),
@@ -184,7 +184,7 @@
 .affiliation-notice {
   position: absolute;
   bottom: var(--edge-space);
-  left: clamp(1.2rem, 0.9rem + 0.8vw, 1.9rem);
+  left: clamp(1.5rem, 0.9rem + 0.8vw, 1.9rem);
   z-index: 12;
   color: rgba(241, 245, 249, 0.8);
   font-size: clamp(0.65rem, 0.58rem + 0.2vw, 0.76rem);
@@ -257,7 +257,7 @@
 
 .toggle-thumb {
   position: absolute;
-  top: 0.19rem;
+  top: 0.15rem;
   left: 0.19rem;
   width: calc(50% - 0.38rem);
   height: calc(100% - 0.38rem);
