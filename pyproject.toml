@@ -13,6 +13,7 @@ dependencies = [
     "dash-deck>=0.0.1",
     "duckdb>=1.5.4",
     "geopandas>=1.1.4",
+    "gunicorn>=26.0.0",
     "matplotlib>=3.11.1",
     "pandas>=3.0.3",
     "plotly>=6.9.0",
