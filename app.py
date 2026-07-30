@@ -141,7 +141,7 @@ def render_app_default_layout(APP_CACHE: dict) -> html.Div:
                         className="mobile-warning-card",
                         children=[
                             html.H2(
-                                "Desktop Recommended", className="mobile-warning-title"
+                                "Desktop Required", className="mobile-warning-title"
                             ),
                             html.P(
                                 "This visualization is not optimized for mobile devices.",
