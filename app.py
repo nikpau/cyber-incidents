@@ -173,6 +173,10 @@ def init_app(debug: bool = False) -> Dash | None:
                 dyadic_database_file=DYADIC_DATABASE_FILE,
                 debug=True,
             )
+        else:
+            with open("app_cache.json", "r") as f:
+                import json
+                APP_CACHE = json.load(f)
     else:
         APP_CACHE = precompute_app_cache(
             countries_json=COUNTRIES_JSON,
@@ -221,25 +225,20 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    if not Path("app_cache.json").exists() and not args.build_cache and args.debug:
-        print(
-            "⚠️ Warning: app_cache.json not found. "
-            "Run with --build-cache to precompute the cache."
-        )
-        sys.exit(1)
     if args.build_cache:
         from cache import precompute_app_cache
 
         precompute_app_cache(
-            countries_json=COUNTRIES_JSON, 
-            dyadic_database_file=DYADIC_DATABASE_FILE, 
-            debug=True
+            countries_json=COUNTRIES_JSON,
+            dyadic_database_file=DYADIC_DATABASE_FILE,
+            debug=True,
         )
         sys.exit(0)
-    init_app().run(host=args.host, port=args.port, debug=args.debug)
+    app = init_app(debug=args.debug)
+    app.run(host=args.host, port=args.port, debug=args.debug)
+
 
 # Minmal setup for running the app with gunicorn or other WSGI servers
 def init_server() -> Flask:
     """Initializes the Dash app for WSGI servers."""
     return init_app().server
-    
