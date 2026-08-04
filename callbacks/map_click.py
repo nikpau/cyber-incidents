@@ -40,7 +40,6 @@ def register_map_click_callback(
     """
 
     @app.callback(
-        Output("arc-data-store", "data"),
         Output("inspector-card-title", "children"),
         Output("inspector-card-image", "src"),
         Output("inspector-card-content", "children"),
@@ -86,9 +85,8 @@ def register_map_click_callback(
                 get_map_json_fast(base_geojson=base_map_dict),
                 cache[incident_type]["DEFAULT"]["name"],
                 cache[incident_type]["DEFAULT"]["svg"],
-                default_inspector_children[2].children,
                 None,
-                [],
+                default_inspector_children[2].children,
                 {"display": "none"},
             )
 
@@ -98,7 +96,6 @@ def register_map_click_callback(
         )
         if not clicked_object:
             return (
-                no_update,
                 no_update,
                 no_update,
                 no_update,
@@ -143,7 +140,6 @@ def register_map_click_callback(
                 no_update,
                 no_update,
                 no_update,
-                no_update,
                 selected_country_iso,
                 modal_children,
                 {"display": "flex"},
@@ -162,7 +158,6 @@ def register_map_click_callback(
                     no_update,
                     no_update,
                     no_update,
-                    no_update,
                     [],
                     {"display": "none"},
                 )
@@ -177,7 +172,6 @@ def register_map_click_callback(
 
             # Render the map canvas with the incident arcs for the selected country.
             return (
-                cache[incident_type][iso_alpha_2]["arc_data"],
                 country_name,
                 image_src,
                 render_inspector_card_content(

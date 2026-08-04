@@ -20,7 +20,7 @@ from callbacks.map_toggle import register_perspective_toggle_callbacks
 from components.inspector_card import render_inspector_card_default
 from components.map import get_colorbar_ticks, get_map_json_fast, render_map_canvas
 from data_helpers.db import get_colorbar_gradient_css
-from data_helpers.schema import IncidentType
+from data_helpers.schema import AppCacheKeys, IncidentType
 
 OXANIUM_FONT_URL = (
     "https://fonts.googleapis.com/css2?family=Oxanium:wght@200..800&display=swap"
@@ -33,12 +33,18 @@ def render_app_default_layout(APP_CACHE: dict) -> html.Div:
         children=[
             dcc.Store(
                 id="base-map-store",
-                data=get_map_json_fast(
-                    APP_CACHE[IncidentType.ATTACKER]["DEFAULT"]["base_geojson_dict"]
-                ),
+                data={
+                    IncidentType.ATTACKER: get_map_json_fast(
+                        APP_CACHE[IncidentType.ATTACKER]["DEFAULT"]["base_geojson_dict"]
+                    ),
+                    IncidentType.RECEIVER: get_map_json_fast(
+                        APP_CACHE[IncidentType.RECEIVER]["DEFAULT"]["base_geojson_dict"]
+                    ),
+                },
             ),
-            dcc.Store(id="arc-data-store", data=[]),
+            dcc.Store(id="arc-data-store", data=APP_CACHE[AppCacheKeys.ARC_DATA]),
             dcc.Store(id="selected-country-store", data=None),
+            dcc.Store(id="perspective-toggle-store", data=IncidentType.ATTACKER),
             html.Div(
                 className="desktop-only-content",
                 children=[
@@ -113,7 +119,7 @@ def render_app_default_layout(APP_CACHE: dict) -> html.Div:
                                 className="incident-colorbar-track",
                                 style={"background": get_colorbar_gradient_css()},
                             ),
-                            get_colorbar_ticks(APP_CACHE,"attacker"),
+                            get_colorbar_ticks(APP_CACHE, "attacker"),
                         ],
                     ),
                     # Affiliation notice
@@ -203,6 +209,8 @@ def init_app(debug: bool = False) -> Dash | None:
         Output("map-canvas", "data", allow_duplicate=True),
         Input("arc-data-store", "data"),
         Input("base-map-store", "data"),
+        Input("perspective-toggle-store", "data"),
+        Input("selected-country-store", "data"),
         prevent_initial_call="initial_duplicate",
     )
 
