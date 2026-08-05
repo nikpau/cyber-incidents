@@ -217,77 +217,71 @@
 .perspective-toggle {
   position: relative;
   width: clamp(11rem, 10.2rem + 2.2vw, 13.75rem);
-  height: clamp(2.1rem, 1.9rem + 0.6vw, 2.75rem);
+  height: clamp(2.2rem, 2rem + 0.6vw, 2.8rem);
+  padding: 0.2rem;
   border-radius: 999px;
-  border: 0px solid rgba(255, 255, 255, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   background: linear-gradient(145deg, rgba(15, 23, 42, 0.92), rgba(2, 6, 23, 0.92));
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.25rem;
   overflow: hidden;
   color: #f8fafc;
   font-size: clamp(0.68rem, 0.62rem + 0.2vw, 0.82rem);
   font-weight: 700;
   letter-spacing: 0.02em;
   cursor: pointer;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
   transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
 }
 
 .perspective-toggle:hover {
   transform: translateY(-1px);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.32);
-  filter: brightness(1.08);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.3);
+  filter: brightness(1.06);
 }
 
 .perspective-toggle:active {
   transform: translateY(0);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.24);
 }
 
 .toggle-label {
   position: relative;
   z-index: 2;
-  width: 50%;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  border-radius: 999px;
   text-align: center;
   user-select: none;
-  transition: color 150ms ease;
+  transition: background-color 160ms ease, color 160ms ease;
   font-family: "Oxanium", sans-serif;
 }
 
 .toggle-thumb {
-  position: absolute;
-  top: 0.15rem;
-  left: 0.19rem;
-  width: calc(50% - 0.38rem);
-  height: calc(100% - 0.38rem);
-  border-radius: 999px;
-  background: linear-gradient(135deg, #e5e7eb, #cbd5e1);
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.35);
-  transition: transform 200ms ease;
-}
-
-.perspective-toggle.is-receiver .toggle-thumb {
-  transform: translateX(100%);
-}
-
-.perspective-toggle.is-attacker .toggle-thumb {
-  transform: translateX(0%);
+  display: none;
 }
 
 .perspective-toggle.is-attacker .toggle-label-left {
+  background: #f8fafc;
   color: #0f172a;
 }
 
 .perspective-toggle.is-attacker .toggle-label-right {
+  background: transparent;
   color: rgba(241, 245, 249, 0.7);
 }
 
 .perspective-toggle.is-receiver .toggle-label-left {
+  background: transparent;
   color: rgba(241, 245, 249, 0.7);
 }
 
 .perspective-toggle.is-receiver .toggle-label-right {
+  background: #f8fafc;
   color: #0f172a;
 }
 

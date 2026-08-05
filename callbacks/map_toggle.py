@@ -73,8 +73,8 @@ def register_perspective_toggle_callbacks(
     """
 
     @app.callback(
-        Output("base-map-store", "data", allow_duplicate=True),
-        Output("arc-data-store", "data", allow_duplicate=True),
+        Output("selected-country-store", "data", allow_duplicate=True),
+        Output("perspective-toggle-store", "data", allow_duplicate=True),
         Output("toggle-incident-type", "className"),
         Output("incident-colorbar-context", "children"),
         Output("incident-colorbar-mid", "children"),
@@ -226,14 +226,9 @@ def register_perspective_toggle_callbacks(
 
             default_inspector_children = render_inspector_card_default().children
             return (
-                # GeoJSON base map data (retrieved from cache and formatted for visualization)
-                get_map_json_fast(
-                    base_geojson=cache[incident_type]["DEFAULT"][
-                        "base_geojson_dict"
-                    ],
-                ),
-                # Empty arc data (no flows shown when no country is selected)
-                [],
+                None,  # No change to selected country store
+                # Incident perspective is stored in the perspective-toggle-store for clientside callbacks
+                incident_type,
                 # Button styling
                 button_class,
                 # Perspective label
@@ -260,14 +255,10 @@ def register_perspective_toggle_callbacks(
 
         # A country is selected: return all data updates including country-specific information
         return (
-            # GeoJSON base map data with this country potentially highlighted
-            get_map_json_fast(
-                base_geojson=cache[incident_type]["DEFAULT"]["base_geojson_dict"],
-            ),
-            # Arc data showing flow lines from/to the selected country based on perspective
-            # For attacker view: arrows showing where this country attacked
-            # For receiver view: arrows showing who attacked this country
-            cache[incident_type][selected_country]["arc_data"],
+            # Selected country
+            selected_country,
+            # Incident perspective is stored in the perspective-toggle-store for clientside callbacks
+            incident_type,
             # Button styling
             button_class,
             # Perspective label

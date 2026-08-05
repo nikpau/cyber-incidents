@@ -78,6 +78,10 @@ def precompute_app_cache(
         IncidentType.ATTACKER: {},
         IncidentType.RECEIVER: {},
     }
+    ARC_CACHE: dict[str, dict[str,list]] = {
+        IncidentType.ATTACKER: {},
+        IncidentType.RECEIVER: {},
+    }  # For storing arc data per country/perspective
 
     print("⏳ Pre-computing country cache... This will take a few seconds.")
 
@@ -231,9 +235,13 @@ def precompute_app_cache(
             APP_CACHE[incident_type][iso] = {
                 AppCacheKeys.NAME: country_name,  # Human-readable country name
                 AppCacheKeys.SVG: svg_uri,  # SVG of country shape
-                AppCacheKeys.ARC_DATA: arc_data,  # Attack flow visualization data
                 AppCacheKeys.INSPECTOR_CARD_CONTENT: inspector_card_content,  # Summary HTML content
             }
+            # Store arc data separately for clientside callbacks
+            ARC_CACHE[incident_type][iso] = arc_data
+            
+    # Add Arc data to the main cache for both perspectives
+    APP_CACHE[AppCacheKeys.ARC_DATA] = ARC_CACHE
 
     # ============================================================================
     # PHASE 3: Persist Cache to Disk

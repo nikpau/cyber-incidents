@@ -1,20 +1,27 @@
 window.dash_clientside = Object.assign({}, window.dash_clientside, {
     clientside: {
-        update_map_canvas: function(arcData, baseMapString) {
-            if (!baseMapString) {
+        update_map_canvas: function(arcData, baseMapDict, perspective, selectedCountry) {
+            if (!baseMapDict) {
                 return window.dash_clientside.no_update;
+            }
+
+            // Select the appropriate base map based on the perspective toggle
+            if (perspective === 'attacker') {
+                var baseMapString = baseMapDict.attacker;
+            } else if (perspective === 'receiver') {
+                var baseMapString = baseMapDict.receiver;
             }
             
             // Convert the base map string back to a JSON object
             let deckData = JSON.parse(baseMapString);
 
-            // If the server sent us arcs, update the deckData with them
-            if (arcData && arcData.length > 0) {
+            // Only update arcs once the perspective and selected country are defined
+            if (perspective && selectedCountry) {
                 const arcLayer = {
                     "id": 'arc-layer',
                     "@@type": 'ArcLayer',
                     "pickable": true,
-                    "data": arcData,
+                    "data": arcData[perspective][selectedCountry],
                     "getSourcePosition": "@@=[origin_lon, origin_lat]",
                     "getTargetPosition": "@@=[dest_lon, dest_lat]",
                     "getSourceColor": [205, 0, 0, 255],

@@ -26,7 +26,6 @@ def register_map_reset_callback(
         app: The Dash application instance used to register the callback.
     """
     @app.callback(
-        Output("arc-data-store", "data", allow_duplicate=True),
         Output("inspector-card-title", "children", allow_duplicate=True),
         Output("inspector-card-image", "src", allow_duplicate=True),
         Output("inspector-card-content", "children", allow_duplicate=True),
@@ -55,7 +54,6 @@ def register_map_reset_callback(
         default_inspector_children = render_inspector_card_default().children
 
         return (
-            [],
             cache[incident_type]["DEFAULT"]["name"],
             cache[incident_type]["DEFAULT"]["svg"],
             default_inspector_children[2].children,
