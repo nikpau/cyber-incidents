@@ -13,7 +13,7 @@
     padding: clamp(1rem, 0.8rem + 1vw, 1.5rem);
     box-sizing: border-box;
     color: #f8fafc;
-    font-family: "Oxanium", sans-serif;
+    font-family: var(--font-family);
     display: flex;
     flex-direction: column;
     gap: clamp(0.75rem, 0.65rem + 0.4vw, 1rem); /* consistent spacing between main sections */

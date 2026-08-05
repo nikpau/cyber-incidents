@@ -23,7 +23,7 @@ from data_helpers.db import get_colorbar_gradient_css
 from data_helpers.schema import AppCacheKeys, IncidentType
 
 OXANIUM_FONT_URL = (
-    "https://fonts.googleapis.com/css2?family=Oxanium:wght@200..800&display=swap"
+    "https://fonts.googleapis.com/css2?family=Oxanium:wght@200..800&family=Teachers:ital,wght@0,400..800;1,400..800&display=swap"
 )
 
 
