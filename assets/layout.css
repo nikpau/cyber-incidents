@@ -18,6 +18,7 @@
 :root {
   --inspector-width: clamp(30rem, 29vw, 28rem);
   --edge-space: clamp(0.75rem, 1.3vw, 1.5rem);
+  --font-family: "Teachers", sans-serif;
 }
 
 .headline {
@@ -33,7 +34,7 @@
 .headline-title {
   margin: 0;
   font-size: clamp(2rem, 1.15rem + 2.6vw, 3rem);
-  font-family: "Oxanium", sans-serif;
+  font-family: var(--font-family);
   font-optical-sizing: auto;
   font-weight: 600;
   font-style: normal;
@@ -44,7 +45,7 @@
   font-size: clamp(0.95rem, 0.82rem + 0.4vw, 1.15rem);
   font-weight: 600;
   color: rgba(241, 245, 249, 0.8);
-  font-family: "Oxanium", sans-serif;
+  font-family: var(--font-family);
   width: min(38rem, 56vw);
 }
 
@@ -62,7 +63,7 @@
     linear-gradient(120deg, rgba(34, 211, 238, 0.24), rgba(34, 211, 238, 0) 45%),
     linear-gradient(180deg, rgba(5, 19, 34, 0.94), rgba(3, 12, 24, 0.96));
   color: #ffffff;
-  font-family: "Oxanium", sans-serif;
+  font-family: var(--font-family);
   font-size: clamp(0.65rem, 0.6rem + 0.2vw, 0.75rem);
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -178,7 +179,7 @@
   bottom: clamp(8.1rem, 5.8rem + 1.9vw, 8.75rem);
   left: var(--edge-space);
   z-index: 12;
-  font-family: "Oxanium", sans-serif;
+  font-family: var(--font-family);
 }
 
 .affiliation-notice {
@@ -188,7 +189,7 @@
   z-index: 12;
   color: rgba(241, 245, 249, 0.8);
   font-size: clamp(0.65rem, 0.58rem + 0.2vw, 0.76rem);
-  font-family: "Oxanium", sans-serif;
+  font-family: var(--font-family);
   font-weight: 500;
   text-align: left;
   width: clamp(10rem, 9rem + 3vw, 12.5rem);
@@ -258,7 +259,7 @@
   text-align: center;
   user-select: none;
   transition: background-color 160ms ease, color 160ms ease;
-  font-family: "Oxanium", sans-serif;
+  font-family: var(--font-family);
 }
 
 .toggle-thumb {
@@ -299,7 +300,7 @@
   background: rgba(2, 6, 23, 0.82);
   backdrop-filter: blur(10px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  font-family: "Oxanium", sans-serif;
+  font-family: var(--font-family);
 }
 
 .incident-colorbar-title {
@@ -365,7 +366,7 @@
     background: rgba(15, 23, 42, 0.92);
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
     text-align: center;
-    font-family: "Oxanium", sans-serif;
+    font-family: var(--font-family);
   }
 
   .mobile-warning-title {

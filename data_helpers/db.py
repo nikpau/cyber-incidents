@@ -13,7 +13,8 @@ from data_helpers.schema import (
 )
 
 # Single source of truth for map and colorbar palette.
-COLORMAP_HEX_STOPS = ["#335c67", "#fff3b0", "#e09f3e", "#9e2a2b", "#540b0e"]
+COLORMAP_HEX_STOPS = ["#2b2d42", "#8d99ae", "#edf2f4", "#ef233c", "#d90429"]
+
 
 COLORMAP = mcolors.LinearSegmentedColormap.from_list(
     "cyber_incidents_copper",
